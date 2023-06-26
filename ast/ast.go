@@ -25,6 +25,11 @@ type Identifier struct {
 	Value string
 }
 
+type IntergerLiteral struct {
+	Token token.Token
+	Value int64
+}
+
 type LetStatement struct {
 	Token token.Token
 	Name  *Identifier
@@ -51,6 +56,14 @@ func (i *Identifier) TokenLiteral() string {
 }
 func (i *Identifier) String() string {
 	return i.Value
+}
+
+func (i *IntergerLiteral) expressionNode() {}
+func (i *IntergerLiteral) TokenLiteral() string {
+	return i.Token.Literal
+}
+func (i *IntergerLiteral) String() string {
+	return i.Token.Literal
 }
 
 func (l *LetStatement) statementNode() {}
