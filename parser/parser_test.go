@@ -47,6 +47,60 @@ func testLetStatement(t *testing.T, statement ast.Statement, name string) bool {
 	return true
 }
 
+func testIntegerLiteral(t *testing.T, ex ast.Expression, value int64) bool {
+	num, ok := ex.(*ast.IntergerLiteral)
+	if !ok {
+		t.Errorf("ex not *ast.IntegerLiteral. got=%T", ex)
+		return false
+	}
+
+	if num.Value != value {
+		t.Errorf("value not %d. got=%s", value, num.TokenLiteral())
+		return false
+	}
+
+	return true
+}
+
+func TestParsingPrefixExpressions(t *testing.T) {
+	prefixTests := []struct {
+		input        string
+		operator     string
+		integerValue int64
+	}{
+		{"!5;", "!", 5},
+		{"-15;", "-", 15},
+	}
+
+	for _, tt := range prefixTests {
+		parser := New(lexer.New(tt.input))
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements does not contain single statments. got=%d", len(program.Statements))
+		}
+
+		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		exp, ok := statement.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Fatalf("statement is not ast.PrefixExpression. got=%T", statement.Expression)
+		}
+
+		if exp.Operator != tt.operator {
+			t.Errorf("exp.Operator is not '%s'. got %q", tt.operator, exp.Operator)
+		}
+
+		if !testIntegerLiteral(t, exp.Right, tt.integerValue) {
+			return
+		}
+	}
+}
+
 func TestLetStatements(t *testing.T) {
 	input := `
 	let x = 5;

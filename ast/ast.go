@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"fmt"
 	"fungo/token"
 )
 
@@ -46,8 +47,22 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
+type PrefixExpression struct {
+	Token    token.Token
+	Operator string
+	Right    Expression
+}
+
 type Program struct {
 	Statements []Statement
+}
+
+func (p *PrefixExpression) expressionNode() {}
+func (p *PrefixExpression) TokenLiteral() string {
+	return p.Token.Literal
+}
+func (p *PrefixExpression) String() string {
+	return fmt.Sprintf("(%s%s)", p.Operator, p.Right.String())
 }
 
 func (i *Identifier) expressionNode() {}
