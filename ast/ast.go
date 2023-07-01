@@ -53,8 +53,23 @@ type PrefixExpression struct {
 	Right    Expression
 }
 
+type InfixExpression struct {
+	Token    token.Token
+	Right    Expression
+	Operator string
+	Left     Expression
+}
+
 type Program struct {
 	Statements []Statement
+}
+
+func (i *InfixExpression) expressionNode() {}
+func (i *InfixExpression) TokenLiteral() string {
+	return i.Token.Literal
+}
+func (i *InfixExpression) String() string {
+	return fmt.Sprintf("(%s %s %s)", i.Left.String(), i.Operator, i.Right.String())
 }
 
 func (p *PrefixExpression) expressionNode() {}
