@@ -72,7 +72,7 @@ func (p *Parser) nextToken() {
 }
 
 func (p *Parser) peekError(t token.TokenType) {
-	msg := fmt.Sprintf("expected next token to be %s, got %s instead", t, p.peekToken.Type)
+	msg := fmt.Sprintf("expected next token to be %q, got %q instead", t, p.peekToken.Type)
 
 	p.errors = append(p.errors, msg)
 }
@@ -104,11 +104,13 @@ func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
 }
 
 func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	msg := fmt.Sprintf("no prefix parse function for %s found", t)
+	msg := fmt.Sprintf("no prefix parse function for %q found", t)
 	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) parseIdentifier() ast.Expression {
+	defer untrace(trace("parseIdentifier"))
+
 	return &ast.Identifier{
 		Token: p.currToken,
 		Value: p.currToken.Literal,
@@ -116,6 +118,8 @@ func (p *Parser) parseIdentifier() ast.Expression {
 }
 
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	defer untrace(trace("parseReturnStatement"))
+
 	statement := &ast.ReturnStatement{
 		Token: p.currToken,
 	}
@@ -131,6 +135,8 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 }
 
 func (p *Parser) parseLetStatement() *ast.LetStatement {
+	defer untrace(trace("parseLetStatement"))
+
 	statement := &ast.LetStatement{Token: p.currToken}
 
 	if !p.expectPeek(token.IDENT) {
@@ -155,6 +161,8 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 }
 
 func (p *Parser) parseStatement() ast.Statement {
+	defer untrace(trace("parseStatement (" + string(p.currToken.Type) + ")"))
+
 	switch p.currToken.Type {
 	case token.LET:
 		return p.parseLetStatement()
@@ -166,6 +174,8 @@ func (p *Parser) parseStatement() ast.Statement {
 }
 
 func (p *Parser) parseIntegerLiteral() ast.Expression {
+	defer untrace(trace("parseIntegerLiteral"))
+
 	value, err := strconv.ParseInt(p.currToken.Literal, 0, 64)
 	if err != nil {
 		p.errors = append(p.errors, fmt.Sprintf("could not parse %q as integer", p.currToken.Literal))
@@ -179,6 +189,8 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 }
 
 func (p *Parser) parseExpression(precendence int) ast.Expression {
+	defer untrace(trace("parseExpression"))
+
 	prefix := p.prefixParseFns[p.currToken.Type]
 
 	if prefix == nil {
@@ -186,6 +198,7 @@ func (p *Parser) parseExpression(precendence int) ast.Expression {
 		return nil
 	}
 
+	// Builds the tree node
 	leftExp := prefix()
 
 	for !p.peekTokenIs(token.SEMICOLON) && precendence < p.peekPrecedence() {
@@ -204,6 +217,8 @@ func (p *Parser) parseExpression(precendence int) ast.Expression {
 }
 
 func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	defer untrace(trace("parseExpressionStatement"))
+
 	statement := &ast.ExpressionStatement{Token: p.currToken}
 
 	statement.Expression = p.parseExpression(LOWEST)
@@ -216,6 +231,8 @@ func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
 }
 
 func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	defer untrace(trace("parseInfixExpression"))
+
 	expression := &ast.InfixExpression{
 		Token:    p.currToken,
 		Operator: p.currToken.Literal,
@@ -230,6 +247,8 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
+	defer untrace(trace("parsePrefixExpression"))
+
 	expression := &ast.PrefixExpression{
 		Token:    p.currToken,
 		Operator: p.currToken.Literal,
