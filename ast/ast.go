@@ -47,6 +47,11 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
+type Boolean struct {
+	Token token.Token
+	Value bool
+}
+
 type PrefixExpression struct {
 	Token    token.Token
 	Operator string
@@ -144,6 +149,14 @@ func (e *ExpressionStatement) String() string {
 	}
 
 	return ""
+}
+
+func (b *Boolean) expressionNode() {}
+func (b *Boolean) TokenLiteral() string {
+	return b.Token.Literal
+}
+func (b *Boolean) String() string {
+	return b.TokenLiteral()
 }
 
 func (p *Program) String() string {
