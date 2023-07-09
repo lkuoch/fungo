@@ -2,10 +2,15 @@ package parser
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
 var traceLevel int = 0
+
+func traceEnabled() bool {
+	return os.Getenv("TRACE") == "1"
+}
 
 func identLevel() string {
 	return strings.Repeat("  ", traceLevel-1)
@@ -24,12 +29,20 @@ func decIdent() {
 }
 
 func trace(msg string) string {
+	if !traceEnabled() {
+		return ""
+	}
+
 	incIdent()
 	tracePrint("BEGIN " + msg)
 	return msg
 }
 
 func untrace(msg string) {
+	if !traceEnabled() {
+		return
+	}
+
 	tracePrint("END " + msg)
 	decIdent()
 }
