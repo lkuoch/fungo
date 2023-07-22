@@ -39,7 +39,7 @@ var precendences = map[token.TokenType]int{
 }
 
 type Parser struct {
-	l *lexer.Lexer
+	lexer *lexer.Lexer
 
 	errors []string
 
@@ -48,6 +48,63 @@ type Parser struct {
 
 	prefixParseFns map[token.TokenType]prefixParseFn
 	infixParseFns  map[token.TokenType]infixParseFn
+}
+
+func New(lexer *lexer.Lexer) *Parser {
+	parser := &Parser{
+		lexer:          lexer,
+		errors:         []string{},
+		prefixParseFns: make(map[token.TokenType]prefixParseFn),
+		infixParseFns:  make(map[token.TokenType]infixParseFn),
+	}
+
+	// Register Prefix Expressions
+	parser.registerPrefix(token.IDENT, parser.parseIdentifier)
+	parser.registerPrefix(token.INT, parser.parseIntegerLiteral)
+	parser.registerPrefix(token.BANG, parser.parsePrefixExpression)
+	parser.registerPrefix(token.MINUS, parser.parsePrefixExpression)
+	parser.registerPrefix(token.TRUE, parser.parseBoolean)
+	parser.registerPrefix(token.FALSE, parser.parseBoolean)
+	parser.registerPrefix(token.LPAREN, parser.parseGroupExpression)
+
+	// Register Infix Expressions
+	parser.registerInfix(token.PLUS, parser.parseInfixExpression)
+	parser.registerInfix(token.MINUS, parser.parseInfixExpression)
+	parser.registerInfix(token.SLASH, parser.parseInfixExpression)
+	parser.registerInfix(token.ASTERISK, parser.parseInfixExpression)
+	parser.registerInfix(token.EQ, parser.parseInfixExpression)
+	parser.registerInfix(token.NOT_EQ, parser.parseInfixExpression)
+	parser.registerInfix(token.LT, parser.parseInfixExpression)
+	parser.registerInfix(token.GT, parser.parseInfixExpression)
+
+	// Read two tokens, so currToken and peekToken are both set
+	parser.nextToken()
+	parser.nextToken()
+
+	return parser
+}
+
+func (p *Parser) ParseProgram() *ast.Program {
+	program := &ast.Program{}
+	program.Statements = []ast.Statement{}
+
+	for p.currToken.Type != token.EOF {
+		statement := p.parseStatement()
+		program.Statements = append(program.Statements, statement)
+
+		p.nextToken()
+	}
+
+	return program
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
+func (p *Parser) nextToken() {
+	p.currToken = p.peekToken
+	p.peekToken = p.lexer.NextToken()
 }
 
 func (p *Parser) peekPrecedence() int {
@@ -64,11 +121,6 @@ func (p *Parser) currPrecedence() int {
 	}
 
 	return LOWEST
-}
-
-func (p *Parser) nextToken() {
-	p.currToken = p.peekToken
-	p.peekToken = p.l.NextToken()
 }
 
 func (p *Parser) peekError(t token.TokenType) {
@@ -277,56 +329,4 @@ func (p *Parser) parseGroupExpression() ast.Expression {
 	}
 
 	return exp
-}
-
-func New(l *lexer.Lexer) *Parser {
-	p := &Parser{
-		l:              l,
-		errors:         []string{},
-		prefixParseFns: make(map[token.TokenType]prefixParseFn),
-		infixParseFns:  make(map[token.TokenType]infixParseFn),
-	}
-
-	// Register Prefix Expressions
-	p.registerPrefix(token.IDENT, p.parseIdentifier)
-	p.registerPrefix(token.INT, p.parseIntegerLiteral)
-	p.registerPrefix(token.BANG, p.parsePrefixExpression)
-	p.registerPrefix(token.MINUS, p.parsePrefixExpression)
-	p.registerPrefix(token.TRUE, p.parseBoolean)
-	p.registerPrefix(token.FALSE, p.parseBoolean)
-	p.registerPrefix(token.LPAREN, p.parseGroupExpression)
-
-	// Register Infix Expressions
-	p.registerInfix(token.PLUS, p.parseInfixExpression)
-	p.registerInfix(token.MINUS, p.parseInfixExpression)
-	p.registerInfix(token.SLASH, p.parseInfixExpression)
-	p.registerInfix(token.ASTERISK, p.parseInfixExpression)
-	p.registerInfix(token.EQ, p.parseInfixExpression)
-	p.registerInfix(token.NOT_EQ, p.parseInfixExpression)
-	p.registerInfix(token.LT, p.parseInfixExpression)
-	p.registerInfix(token.GT, p.parseInfixExpression)
-
-	// Read two tokens, so currToken and peekToken are both set
-	p.nextToken()
-	p.nextToken()
-
-	return p
-}
-
-func (p *Parser) ParseProgram() *ast.Program {
-	program := &ast.Program{}
-	program.Statements = []ast.Statement{}
-
-	for p.currToken.Type != token.EOF {
-		statement := p.parseStatement()
-		program.Statements = append(program.Statements, statement)
-
-		p.nextToken()
-	}
-
-	return program
-}
-
-func (p *Parser) Errors() []string {
-	return p.errors
 }
