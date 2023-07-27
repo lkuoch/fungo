@@ -47,6 +47,11 @@ type ExpressionStatement struct {
 	Expression Expression
 }
 
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
+}
+
 type Boolean struct {
 	Token token.Token
 	Value bool
@@ -63,6 +68,14 @@ type InfixExpression struct {
 	Right    Expression
 	Operator string
 	Left     Expression
+}
+
+// if (<condition>) { <IfCondition> } else { <ElseCondition> }
+type IfExpression struct {
+	Token         token.Token
+	Condition     Expression
+	IfCondition   *BlockStatement
+	ElseCondition *BlockStatement
 }
 
 type Program struct {
@@ -83,6 +96,22 @@ func (p *PrefixExpression) TokenLiteral() string {
 }
 func (p *PrefixExpression) String() string {
 	return fmt.Sprintf("(%s%s)", p.Operator, p.Right.String())
+}
+
+func (i *IfExpression) expressionNode() {}
+func (i *IfExpression) TokenLiteral() string {
+	return i.Token.Literal
+}
+func (i *IfExpression) String() string {
+	var out bytes.Buffer
+
+	if i.ElseCondition != nil {
+		out.WriteString("if" + i.Condition.String() + " " + i.IfCondition.String() + "else " + i.ElseCondition.String())
+	} else {
+		out.WriteString("if" + i.Condition.String() + " " + i.IfCondition.String())
+	}
+
+	return out.String()
 }
 
 func (i *Identifier) expressionNode() {}
@@ -108,15 +137,7 @@ func (l *LetStatement) TokenLiteral() string {
 func (l *LetStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(l.TokenLiteral() + " ")
-	out.WriteString(l.Name.String())
-	out.WriteString(" = ")
-
-	if l.Value != nil {
-		out.WriteString(l.Value.String())
-	}
-
-	out.WriteString(";")
+	out.WriteString(l.TokenLiteral() + " " + l.Name.String() + " = " + l.Value.String() + ";")
 
 	return out.String()
 }
@@ -128,13 +149,7 @@ func (r *ReturnStatement) TokenLiteral() string {
 func (r *ReturnStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(r.TokenLiteral() + " ")
-
-	if r.ReturnValue != nil {
-		out.WriteString(r.ReturnValue.String())
-	}
-
-	out.WriteString(";")
+	out.WriteString(r.TokenLiteral() + " " + r.ReturnValue.String() + ";")
 
 	return out.String()
 }
@@ -149,6 +164,20 @@ func (e *ExpressionStatement) String() string {
 	}
 
 	return ""
+}
+
+func (b *BlockStatement) statementNode() {}
+func (b *BlockStatement) TokenLiteral() string {
+	return b.Token.Literal
+}
+func (b *BlockStatement) String() string {
+	var out bytes.Buffer
+
+	for _, s := range b.Statements {
+		out.WriteString(s.String())
+	}
+
+	return out.String()
 }
 
 func (b *Boolean) expressionNode() {}
