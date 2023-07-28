@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"fungo/token"
+	"strings"
 )
 
 type Node interface {
@@ -76,6 +77,13 @@ type IfExpression struct {
 	Condition     Expression
 	IfCondition   *BlockStatement
 	ElseCondition *BlockStatement
+}
+
+// fn <parameters> <block statement>
+type FunctionLiteral struct {
+	Token      token.Token
+	Parameters []*Identifier
+	Body       *BlockStatement
 }
 
 type Program struct {
@@ -176,6 +184,20 @@ func (b *BlockStatement) String() string {
 	for _, s := range b.Statements {
 		out.WriteString(s.String())
 	}
+
+	return out.String()
+}
+
+func (f *FunctionLiteral) expressionNode() {}
+func (f *FunctionLiteral) TokenLiteral() string {
+	return f.Token.Literal
+}
+func (f *FunctionLiteral) String() string {
+	var out bytes.Buffer
+
+	params := []string{}
+
+	out.WriteString(f.TokenLiteral() + "(" + strings.Join(params, ", ") + ")" + f.Body.String())
 
 	return out.String()
 }
