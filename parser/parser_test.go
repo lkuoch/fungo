@@ -139,6 +139,9 @@ func (t *ParserTestSuite) TestOperatorPrecedenceParsing() {
 		{"2 / (5 + 5)", "(2 / (5 + 5))"},
 		{"-(5 + 5)", "(-(5 + 5))"},
 		{"!(true == true)", "(!(true == true))"},
+		{"a + add(b * c) + d", "((a + add((b * c))) + d)"},
+		{"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"},
+		{"add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"},
 	}
 
 	for _, test := range tests {
@@ -380,4 +383,27 @@ func (t *ParserTestSuite) TestFunctionParameterParsing() {
 			t.testLiteralExpression(function.Parameters[i], identifier)
 		}
 	}
+}
+
+func (t *ParserTestSuite) TestExpressionParsing() {
+	input := "add(1, 2 * 3, 4 + 5);"
+
+	parser := New(lexer.New(input))
+	program := parser.ParseProgram()
+	t.Empty(parser.Errors())
+
+	t.Len(program.Statements, 1)
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	t.True(ok)
+
+	expression, ok := statement.Expression.(*ast.CallExpression)
+	t.True(ok)
+
+	t.testIdentifier(expression.Function, "add")
+	t.Len(expression.Arguments, 3)
+
+	t.testLiteralExpression(expression.Arguments[0], 1)
+	t.testInfixExpression(expression.Arguments[1], 2, "*", 3)
+	t.testInfixExpression(expression.Arguments[2], 4, "+", 5)
 }
