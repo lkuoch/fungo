@@ -186,30 +186,29 @@ func (t *ParserTestSuite) TestParsingPrefixExpressions() {
 }
 
 func (t *ParserTestSuite) TestLetStatements() {
-	input := `
-	let x = 5;
-	let y = 10;
-	let foobar = 838383;
-	`
-
-	parser := New(lexer.New(input))
-	program := parser.ParseProgram()
-
-	t.Empty(parser.Errors())
-	t.NotNil(program)
-	t.Len(program.Statements, 3)
-
 	tests := []struct {
+		input              string
 		expectedIdentifier string
+		expectedValue      interface{}
 	}{
-		{"x"},
-		{"y"},
-		{"foobar"},
+		{"let x = 5;", "x", 5},
+		{"let y = true;", "y", true},
+		{"let foobar = y;", "foobar", "y"},
 	}
 
-	for i, token := range tests {
-		statement := program.Statements[i]
-		t.testLetStatement(statement, token.expectedIdentifier)
+	for _, test := range tests {
+		parser := New(lexer.New(test.input))
+		program := parser.ParseProgram()
+
+		t.Empty(parser.Errors())
+		t.NotNil(program)
+		t.Len(program.Statements, 1)
+
+		statement := program.Statements[0]
+		t.testLetStatement(statement, test.expectedIdentifier)
+
+		value := statement.(*ast.LetStatement).Value
+		t.testLiteralExpression(value, test.expectedValue)
 	}
 }
 
@@ -236,22 +235,28 @@ func (t *ParserTestSuite) TestReturnStatement() {
 }
 
 func (t *ParserTestSuite) TestIdentifierExpression() {
-	input := "foobar"
+	tests := []struct {
+		input         string
+		expectedValue interface{}
+	}{
+		{"return 5;", 5},
+		{"return true;", true},
+		{"return foobar;", "foobar"},
+	}
 
-	parser := New(lexer.New(input))
-	program := parser.ParseProgram()
+	for _, test := range tests {
+		parser := New(lexer.New(test.input))
+		program := parser.ParseProgram()
 
-	t.Empty(parser.Errors())
-	t.Len(program.Statements, 1)
+		t.Empty(parser.Errors())
+		t.Len(program.Statements, 1)
 
-	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+		statement, ok := program.Statements[0].(*ast.ReturnStatement)
+		t.True(ok)
 
-	identifier, ok := statement.Expression.(*ast.Identifier)
-	t.True(ok)
-
-	t.Equal(identifier.Value, "foobar")
-	t.Equal(identifier.TokenLiteral(), "foobar")
+		t.Equal(statement.TokenLiteral(), "return")
+		t.testLiteralExpression(statement.ReturnValue, test.expectedValue)
+	}
 }
 
 func (t *ParserTestSuite) TestIntergerLiteralExpression() {
