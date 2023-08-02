@@ -60,16 +60,16 @@ func (i *Identifier) String() string {
 }
 
 // ======= IntegerLiteral =======
-type IntergerLiteral struct {
+type IntegerLiteral struct {
 	Token token.Token
 	Value int64
 }
 
-func (i *IntergerLiteral) expressionNode() {}
-func (i *IntergerLiteral) TokenLiteral() string {
+func (i *IntegerLiteral) expressionNode() {}
+func (i *IntegerLiteral) TokenLiteral() string {
 	return i.Token.Literal
 }
-func (i *IntergerLiteral) String() string {
+func (i *IntegerLiteral) String() string {
 	return i.Token.Literal
 }
 

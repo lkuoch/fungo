@@ -32,7 +32,7 @@ func (t *ParserTestSuite) testLetStatement(statement ast.Statement, name string)
 }
 
 func (t *ParserTestSuite) testIntegerLiteral(ex ast.Expression, value int64) {
-	num, ok := ex.(*ast.IntergerLiteral)
+	num, ok := ex.(*ast.IntegerLiteral)
 
 	t.True(ok)
 	t.Equal(num.Value, value)
@@ -271,7 +271,7 @@ func (t *ParserTestSuite) TestIntergerLiteralExpression() {
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
 	t.True(ok)
 
-	literal, ok := statement.Expression.(*ast.IntergerLiteral)
+	literal, ok := statement.Expression.(*ast.IntegerLiteral)
 	t.True(ok)
 
 	t.Equal(literal.Value, int64(5))

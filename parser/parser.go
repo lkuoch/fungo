@@ -242,7 +242,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 		return nil
 	}
 
-	return &ast.IntergerLiteral{
+	return &ast.IntegerLiteral{
 		Token: p.currToken,
 		Value: value,
 	}
