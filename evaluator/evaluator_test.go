@@ -17,6 +17,10 @@ func TestEvaluatorTestSuite(t *testing.T) {
 	suite.Run(t, &EvaluatorTestSuite{})
 }
 
+func (t *EvaluatorTestSuite) testNullObject(obj object.Object) {
+	t.Equal(obj, NULL)
+}
+
 func (t *EvaluatorTestSuite) testIntegerObject(obj object.Object, expected int64) {
 	result, ok := obj.(*object.Integer)
 	t.True(ok)
@@ -71,11 +75,49 @@ func (t *EvaluatorTestSuite) TestEvalBooleanExpression() {
 	}{
 		{"true", true},
 		{"false", false},
+		{"1 < 2", true},
+		{"1 > 2", false},
+		{"1 < 1", false},
+		{"1 > 1", false},
+		{"1 == 1", true},
+		{"1 != 1", false},
+		{"1 == 2", false},
+		{"1 != 2", true},
+		{"(1 < 2) == true", true},
+		{"(1 < 2) == false", false},
+		{"(1 > 2) == true", false},
+		{"(1 > 2) == false", true},
 	}
 
 	for _, test := range tests {
 		evaluated := t.testEval(test.input)
 		t.testBooleanObject(evaluated, test.expected)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestIfElseExpressions() {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"if (true) {10}", 10},
+		{"if (false) {10}", nil},
+		{"if (1) {10}", 10},
+		{"if (1 < 2) {10}", 10},
+		{"if (1 > 2) {10}", nil},
+		{"if (1 > 2) {10} else {20}", 20},
+		{"if (1 < 2) {10} else {20}", 10},
+	}
+
+	for _, test := range tests {
+		evaluated := t.testEval(test.input)
+		integer, ok := test.expected.(int)
+
+		if ok {
+			t.testIntegerObject(evaluated, int64(integer))
+		} else {
+			t.testNullObject(evaluated)
+		}
 	}
 }
 
