@@ -34,7 +34,7 @@ func trace(msg string) string {
 	}
 
 	incIdent()
-	tracePrint("BEGIN " + msg)
+	tracePrint("↱ " + msg)
 	return msg
 }
 
@@ -43,6 +43,6 @@ func untrace(msg string) {
 		return
 	}
 
-	tracePrint("END " + msg)
+	tracePrint("↳ " + msg)
 	decIdent()
 }

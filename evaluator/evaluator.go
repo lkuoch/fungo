@@ -33,11 +33,29 @@ func isTruthy(obj object.Object) bool {
 	}
 }
 
-func evalStatements(statements []ast.Statement) object.Object {
+func evalProgram(statements []ast.Statement) object.Object {
 	var result object.Object
 
 	for _, statement := range statements {
 		result = Eval(statement)
+
+		if returnValue, ok := result.(*object.ReturnValue); ok {
+			return returnValue.Value
+		}
+	}
+
+	return result
+}
+
+func evalBlockStatement(block *ast.BlockStatement) object.Object {
+	var result object.Object
+
+	for _, statement := range block.Statements {
+		result = Eval(statement)
+
+		if result != nil && result.Type() == object.RETURN_VAL_OBJ {
+			return result
+		}
 	}
 
 	return result
@@ -147,33 +165,43 @@ func evalIfExpression(expression *ast.IfExpression) object.Object {
 	}
 }
 
+func evalReturnExpression(expression *ast.ReturnStatement) object.Object {
+	value := Eval(expression.ReturnValue)
+
+	return &object.ReturnValue{Value: value}
+}
+
 func Eval(node ast.Node) object.Object {
 	switch node := node.(type) {
 	// Statements
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalProgram(node.Statements)
 
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
 
+	case *ast.BlockStatement:
+		return evalBlockStatement(node)
+
+	case *ast.IfExpression:
+		return evalIfExpression(node)
+
+	case *ast.ReturnStatement:
+		return evalReturnExpression(node)
+
+	// Expressions
 	case *ast.PrefixExpression:
 		return evalPrefixExpression(node.Operator, Eval(node.Right))
 
 	case *ast.InfixExpression:
 		return evalInfixExpression(node.Operator, Eval(node.Left), Eval(node.Right))
 
-	// Expressions
+	// Values
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 
 	case *ast.Boolean:
 		return nativeBoolToBooleanObject(node.Value)
-
-	case *ast.BlockStatement:
-		return evalStatements(node.Statements)
-
-	case *ast.IfExpression:
-		return evalIfExpression(node)
 	}
 
 	return nil

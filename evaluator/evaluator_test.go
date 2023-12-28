@@ -25,14 +25,14 @@ func (t *EvaluatorTestSuite) testIntegerObject(obj object.Object, expected int64
 	result, ok := obj.(*object.Integer)
 	t.True(ok)
 
-	t.Equal(result.Value, expected)
+	t.Equal(expected, result.Value)
 }
 
 func (t *EvaluatorTestSuite) testBooleanObject(obj object.Object, expected bool) {
 	result, ok := obj.(*object.Boolean)
 	t.True(ok)
 
-	t.Equal(result.Value, expected)
+	t.Equal(expected, result.Value)
 }
 
 func (t *EvaluatorTestSuite) testEval(input string) object.Object {
@@ -149,6 +149,32 @@ func (t *EvaluatorTestSuite) TestIntegerExpression() {
 		{"10", 10},
 		{"-5", -5},
 		{"-10", -10},
+	}
+
+	for _, test := range tests {
+		evaluated := t.testEval(test.input)
+		t.testIntegerObject(evaluated, test.expected)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestReturnStatements() {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10; 9", 10},
+		{"return 2 * 5; 9", 10},
+		{"9; return 2 * 5;", 10},
+		{`
+			if (10 > 1) {
+				if (10 > 1) {
+					return 10;
+				}
+			}
+
+			return 1;
+		`, 10},
 	}
 
 	for _, test := range tests {
