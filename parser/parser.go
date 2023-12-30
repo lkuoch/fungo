@@ -51,9 +51,9 @@ type Parser struct {
 	infixParseFns  map[token.TokenType]infixParseFn
 }
 
-func New(lexer *lexer.Lexer) *Parser {
+func New(l *lexer.Lexer) *Parser {
 	parser := &Parser{
-		lexer:          lexer,
+		lexer:          l,
 		errors:         []string{},
 		prefixParseFns: make(map[token.TokenType]prefixParseFn),
 		infixParseFns:  make(map[token.TokenType]infixParseFn),
@@ -102,7 +102,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
-func (p *Parser) Errors() []string {
+func (p Parser) Errors() []string {
 	return p.errors
 }
 
@@ -111,7 +111,7 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.lexer.NextToken()
 }
 
-func (p *Parser) peekPrecedence() int {
+func (p Parser) peekPrecedence() int {
 	if p, ok := precendences[p.peekToken.Type]; ok {
 		return p
 	}
@@ -119,7 +119,7 @@ func (p *Parser) peekPrecedence() int {
 	return LOWEST
 }
 
-func (p *Parser) currPrecedence() int {
+func (p Parser) currPrecedence() int {
 	if p, ok := precendences[p.currToken.Type]; ok {
 		return p
 	}

@@ -35,6 +35,13 @@ func (t *EvaluatorTestSuite) testBooleanObject(obj object.Object, expected bool)
 	t.Equal(expected, result.Value)
 }
 
+func (t *EvaluatorTestSuite) testErrorObject(obj object.Object, expected string) {
+	result, ok := obj.(*object.Error)
+	t.True(ok)
+
+	t.Equal(expected, result.Message)
+}
+
 func (t *EvaluatorTestSuite) testEval(input string) object.Object {
 	parser := parser.New(lexer.New(input))
 	program := parser.ParseProgram()
@@ -63,8 +70,8 @@ func (t *EvaluatorTestSuite) TestEvalIntegerExpression() {
 	}
 
 	for _, test := range tests {
-		evaluated := t.testEval(test.input)
-		t.testIntegerObject(evaluated, test.expected)
+		result := t.testEval(test.input)
+		t.testIntegerObject(result, test.expected)
 	}
 }
 
@@ -90,8 +97,8 @@ func (t *EvaluatorTestSuite) TestEvalBooleanExpression() {
 	}
 
 	for _, test := range tests {
-		evaluated := t.testEval(test.input)
-		t.testBooleanObject(evaluated, test.expected)
+		result := t.testEval(test.input)
+		t.testBooleanObject(result, test.expected)
 	}
 }
 
@@ -110,13 +117,13 @@ func (t *EvaluatorTestSuite) TestIfElseExpressions() {
 	}
 
 	for _, test := range tests {
-		evaluated := t.testEval(test.input)
+		result := t.testEval(test.input)
 		integer, ok := test.expected.(int)
 
 		if ok {
-			t.testIntegerObject(evaluated, int64(integer))
+			t.testIntegerObject(result, int64(integer))
 		} else {
-			t.testNullObject(evaluated)
+			t.testNullObject(result)
 		}
 	}
 }
@@ -135,8 +142,8 @@ func (t *EvaluatorTestSuite) TestBangOperator() {
 	}
 
 	for _, test := range tests {
-		evaluated := t.testEval(test.input)
-		t.testBooleanObject(evaluated, test.expected)
+		result := t.testEval(test.input)
+		t.testBooleanObject(result, test.expected)
 	}
 }
 
@@ -152,8 +159,8 @@ func (t *EvaluatorTestSuite) TestIntegerExpression() {
 	}
 
 	for _, test := range tests {
-		evaluated := t.testEval(test.input)
-		t.testIntegerObject(evaluated, test.expected)
+		result := t.testEval(test.input)
+		t.testIntegerObject(result, test.expected)
 	}
 }
 
@@ -178,7 +185,35 @@ func (t *EvaluatorTestSuite) TestReturnStatements() {
 	}
 
 	for _, test := range tests {
-		evaluated := t.testEval(test.input)
-		t.testIntegerObject(evaluated, test.expected)
+		result := t.testEval(test.input)
+		t.testIntegerObject(result, test.expected)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestErrorHandling() {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"5 + true;", "type mismatch: INTEGER + BOOLEAN"},
+		{"5 + true; 5;", "type mismatch: INTEGER + BOOLEAN"},
+		{"-true", "unknown operator: -BOOLEAN"},
+		{"true + false;", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"},
+		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
+		{`
+			if (10 > 1) {
+				if (10 > 1) {
+					return true + false;
+				}
+			}
+
+			return 1;
+	`, "unknown operator: BOOLEAN + BOOLEAN"},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testErrorObject(result, test.expected)
 	}
 }

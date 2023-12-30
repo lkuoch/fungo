@@ -9,6 +9,7 @@ const (
 	BOOLEAN_OBJ    = "BOOLEAN"
 	NULL_OBJ       = "NULL"
 	RETURN_VAL_OBJ = "RETURN_VALUE"
+	ERROR_OBJ      = "ERROR"
 )
 
 type Object interface {
@@ -16,7 +17,7 @@ type Object interface {
 	Inspect() string
 }
 
-// Specifications
+/* ================================= Integer ================================ */
 type Integer struct {
 	Object
 	Value int64
@@ -30,6 +31,7 @@ func (i Integer) Inspect() string {
 	return fmt.Sprintf("%d", i.Value)
 }
 
+/* ================================= Boolean ================================ */
 type Boolean struct {
 	Object
 	Value bool
@@ -43,6 +45,7 @@ func (b Boolean) Inspect() string {
 	return fmt.Sprintf("%t", b.Value)
 }
 
+/* ================================== Null ================================== */
 type Null struct {
 	Object
 }
@@ -51,10 +54,11 @@ func (n Null) Type() ObjectType {
 	return NULL_OBJ
 }
 
-func (n *Null) Inspect() string {
+func (n Null) Inspect() string {
 	return "null"
 }
 
+/* =============================== ReturnValue ============================== */
 type ReturnValue struct {
 	Value Object
 }
@@ -63,6 +67,19 @@ func (r ReturnValue) Type() ObjectType {
 	return RETURN_VAL_OBJ
 }
 
-func (r *ReturnValue) Inspect() string {
+func (r ReturnValue) Inspect() string {
 	return r.Value.Inspect()
+}
+
+/* ================================== Error ================================= */
+type Error struct {
+	Message string
+}
+
+func (e Error) Type() ObjectType {
+	return ERROR_OBJ
+}
+
+func (e Error) Inspect() string {
+	return "⛔️ ERROR: " + e.Message
 }
