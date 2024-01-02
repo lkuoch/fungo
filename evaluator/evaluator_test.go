@@ -17,26 +17,26 @@ func TestEvaluatorTestSuite(t *testing.T) {
 	suite.Run(t, &EvaluatorTestSuite{})
 }
 
-func (t *EvaluatorTestSuite) testNullObject(obj object.Object) {
-	t.Equal(obj, NULL)
+func (t *EvaluatorTestSuite) testNullObject(actual object.Object) {
+	t.Equal(actual, NULL)
 }
 
-func (t *EvaluatorTestSuite) testIntegerObject(obj object.Object, expected int64) {
-	result, ok := obj.(*object.Integer)
+func (t *EvaluatorTestSuite) testIntegerObject(expected int64, actual object.Object) {
+	result, ok := actual.(*object.Integer)
 	t.True(ok)
 
 	t.Equal(expected, result.Value)
 }
 
-func (t *EvaluatorTestSuite) testBooleanObject(obj object.Object, expected bool) {
-	result, ok := obj.(*object.Boolean)
+func (t *EvaluatorTestSuite) testBooleanObject(expected bool, actual object.Object) {
+	result, ok := actual.(*object.Boolean)
 	t.True(ok)
 
 	t.Equal(expected, result.Value)
 }
 
-func (t *EvaluatorTestSuite) testErrorObject(obj object.Object, expected string) {
-	result, ok := obj.(*object.Error)
+func (t *EvaluatorTestSuite) testErrorObject(expected string, actual object.Object) {
+	result, ok := actual.(*object.Error)
 	t.True(ok)
 
 	t.Equal(expected, result.Message)
@@ -45,8 +45,9 @@ func (t *EvaluatorTestSuite) testErrorObject(obj object.Object, expected string)
 func (t *EvaluatorTestSuite) testEval(input string) object.Object {
 	parser := parser.New(lexer.New(input))
 	program := parser.ParseProgram()
+	env := object.NewEnvironment()
 
-	return Eval(program)
+	return Eval(program, env)
 }
 
 func (t *EvaluatorTestSuite) TestEvalIntegerExpression() {
@@ -71,7 +72,7 @@ func (t *EvaluatorTestSuite) TestEvalIntegerExpression() {
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testIntegerObject(result, test.expected)
+		t.testIntegerObject(test.expected, result)
 	}
 }
 
@@ -98,7 +99,7 @@ func (t *EvaluatorTestSuite) TestEvalBooleanExpression() {
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testBooleanObject(result, test.expected)
+		t.testBooleanObject(test.expected, result)
 	}
 }
 
@@ -121,7 +122,7 @@ func (t *EvaluatorTestSuite) TestIfElseExpressions() {
 		integer, ok := test.expected.(int)
 
 		if ok {
-			t.testIntegerObject(result, int64(integer))
+			t.testIntegerObject(int64(integer), result)
 		} else {
 			t.testNullObject(result)
 		}
@@ -143,7 +144,7 @@ func (t *EvaluatorTestSuite) TestBangOperator() {
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testBooleanObject(result, test.expected)
+		t.testBooleanObject(test.expected, result)
 	}
 }
 
@@ -160,7 +161,7 @@ func (t *EvaluatorTestSuite) TestIntegerExpression() {
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testIntegerObject(result, test.expected)
+		t.testIntegerObject(test.expected, result)
 	}
 }
 
@@ -186,7 +187,7 @@ func (t *EvaluatorTestSuite) TestReturnStatements() {
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testIntegerObject(result, test.expected)
+		t.testIntegerObject(test.expected, result)
 	}
 }
 
@@ -210,10 +211,28 @@ func (t *EvaluatorTestSuite) TestErrorHandling() {
 
 			return 1;
 	`, "unknown operator: BOOLEAN + BOOLEAN"},
+		{"foobar", "identifier not found: foobar"},
 	}
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testErrorObject(result, test.expected)
+		t.testErrorObject(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestLetStatement() {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let a = 5; a;", 5},
+		{"let a = 5 * 5; a;", 25},
+		{"let a = 5; let b = a; b;", 5},
+		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testIntegerObject(test.expected, result)
 	}
 }

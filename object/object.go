@@ -10,6 +10,7 @@ const (
 	NULL_OBJ       = "NULL"
 	RETURN_VAL_OBJ = "RETURN_VALUE"
 	ERROR_OBJ      = "ERROR"
+	NOOP_OBJ       = "NOOP"
 )
 
 type Object interface {
@@ -69,6 +70,19 @@ func (r ReturnValue) Type() ObjectType {
 
 func (r ReturnValue) Inspect() string {
 	return r.Value.Inspect()
+}
+
+/* ================================== NOOP ================================== */
+type Noop struct {
+	Object
+}
+
+func (n Noop) Type() ObjectType {
+	return NOOP_OBJ
+}
+
+func (n Noop) Inspect() string {
+	return "noop"
 }
 
 /* ================================== Error ================================= */
