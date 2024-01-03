@@ -4,6 +4,7 @@ import (
 	"fungo/lexer"
 	"fungo/object"
 	"fungo/parser"
+	"fungo/utils"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -33,6 +34,15 @@ func (t *EvaluatorTestSuite) testBooleanObject(expected bool, actual object.Obje
 	t.True(ok)
 
 	t.Equal(expected, result.Value)
+}
+
+func (t *EvaluatorTestSuite) testFunctionObject(expectedParamsLen int, expectedParams []string, expectedBody string, actual object.Object) {
+	result, ok := actual.(*object.Function)
+	t.True(ok)
+
+	t.Len(result.Parameters, expectedParamsLen)
+	t.Equal(expectedParams, utils.MapString(result.Parameters))
+	t.Equal(expectedBody, result.Body.String())
 }
 
 func (t *EvaluatorTestSuite) testErrorObject(expected string, actual object.Object) {
@@ -210,7 +220,7 @@ func (t *EvaluatorTestSuite) TestErrorHandling() {
 			}
 
 			return 1;
-	`, "unknown operator: BOOLEAN + BOOLEAN"},
+		 `, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
 	}
 
@@ -229,6 +239,50 @@ func (t *EvaluatorTestSuite) TestLetStatement() {
 		{"let a = 5 * 5; a;", 25},
 		{"let a = 5; let b = a; b;", 5},
 		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testIntegerObject(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestFuncObject() {
+	tests := []struct {
+		input             string
+		expectedParamsLen int
+		expectedParams    []string
+		expectedBody      string
+	}{
+		{"fn(x) { x + 2; };", 1, []string{"x"}, "(x + 2)"},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testFunctionObject(test.expectedParamsLen, test.expectedParams, test.expectedBody, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestFunctionApplication() {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"let identity = fn(x) { x; }; identity(5);", 5},
+		{"let identity = fn(x) { return x; }; identity(5);", 5},
+		{"let double = fn(x) { return x * 2; }; double(5);", 10},
+		{"let add = fn(x, y) { return x + y; }; add(5, 5);", 10},
+		{"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
+		{"fn(x) { x; }(5)", 5},
+		{`
+			let newAdder = fn(x) {
+				fn(y) { x + y };
+			};
+
+			let addTwo = newAdder(2);
+			addTwo(2);
+		 `, 4,
+		},
 	}
 
 	for _, test := range tests {

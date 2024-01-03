@@ -1,6 +1,11 @@
 package object
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+	"fungo/ast"
+	"strings"
+)
 
 type ObjectType string
 
@@ -11,6 +16,7 @@ const (
 	RETURN_VAL_OBJ = "RETURN_VALUE"
 	ERROR_OBJ      = "ERROR"
 	NOOP_OBJ       = "NOOP"
+	FUNCTION_OBJ   = "FUNCTION"
 )
 
 type Object interface {
@@ -83,6 +89,30 @@ func (n Noop) Type() ObjectType {
 
 func (n Noop) Inspect() string {
 	return "noop"
+}
+
+/* ================================ Function ================================ */
+type Function struct {
+	Parameters []*ast.Identifier
+	Body       *ast.BlockStatement
+	Env        *Environment
+}
+
+func (f Function) Type() ObjectType {
+	return FUNCTION_OBJ
+}
+
+func (f Function) Inspect() string {
+	var out bytes.Buffer
+
+	params := []string{}
+	for _, param := range f.Parameters {
+		params = append(params, param.String())
+	}
+
+	out.WriteString("fn(" + strings.Join(params, ",") + ") {\n" + f.Body.String() + "\n}")
+
+	return out.String()
 }
 
 /* ================================== Error ================================= */

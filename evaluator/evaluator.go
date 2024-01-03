@@ -1,8 +1,6 @@
 package evaluator
 
 import (
-	"fmt"
-
 	"fungo/ast"
 	"fungo/object"
 	"fungo/token"
@@ -14,27 +12,6 @@ var (
 	TRUE  = &object.Boolean{Value: true}
 	FALSE = &object.Boolean{Value: false}
 )
-
-func nativeBoolToBooleanObject(input bool) *object.Boolean {
-	if input {
-		return TRUE
-	}
-
-	return FALSE
-}
-
-func isTruthy(obj object.Object) bool {
-	switch obj {
-	case NULL:
-		return false
-	case TRUE:
-		return true
-	case FALSE:
-		return false
-	default:
-		return true
-	}
-}
 
 func evalProgram(program *ast.Program, env *object.Environment) object.Object {
 	var result object.Object
@@ -229,16 +206,41 @@ func evalLetStatement(statement *ast.LetStatement, env *object.Environment) obje
 	return NOOP
 }
 
-func newError(format string, args ...interface{}) *object.Error {
-	return &object.Error{Message: fmt.Sprintf(format, args...)}
+func evalFunctionLiteral(fn *ast.FunctionLiteral, env *object.Environment) object.Object {
+	return &object.Function{
+		Parameters: fn.Parameters,
+		Body:       fn.Body,
+		Env:        env,
+	}
 }
 
-func isError(obj object.Object) bool {
-	if obj != nil {
-		return obj.Type() == object.ERROR_OBJ
+func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
+	var result []object.Object
+
+	for _, exp := range exps {
+		evaluated := Eval(exp, env)
+
+		if isError(evaluated) {
+			return []object.Object{evaluated}
+		}
+
+		result = append(result, evaluated)
 	}
 
-	return false
+	return result
+}
+
+func evalCallExpression(exp *ast.CallExpression, env *object.Environment) object.Object {
+	fn := Eval(exp.Function, env)
+	if isError(fn) {
+		return fn
+	}
+	args := evalExpressions(exp.Arguments, env)
+	if len(args) == 1 && isError(args[0]) {
+		return args[0]
+	}
+
+	return applyFunction(fn, args)
 }
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -269,6 +271,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.InfixExpression:
 		return evalInfixExpression(node, env)
 
+	case *ast.CallExpression:
+		return evalCallExpression(node, env)
+
 	// Values
 	case *ast.IntegerLiteral:
 		return evalIntegerLiteral(node)
@@ -278,6 +283,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
+
+	case *ast.FunctionLiteral:
+		return evalFunctionLiteral(node, env)
 	}
 
 	return nil

@@ -55,9 +55,11 @@ type Identifier struct {
 }
 
 func (i Identifier) expressionNode() {}
+
 func (i Identifier) TokenLiteral() string {
 	return i.Token.Literal
 }
+
 func (i Identifier) String() string {
 	return i.Value
 }
@@ -83,9 +85,11 @@ type Boolean struct {
 }
 
 func (b Boolean) expressionNode() {}
+
 func (b Boolean) TokenLiteral() string {
 	return b.Token.Literal
 }
+
 func (b Boolean) String() string {
 	return b.TokenLiteral()
 }
@@ -98,9 +102,11 @@ type FunctionLiteral struct {
 }
 
 func (f FunctionLiteral) expressionNode() {}
+
 func (f FunctionLiteral) TokenLiteral() string {
 	return f.Token.Literal
 }
+
 func (f FunctionLiteral) String() string {
 	var out bytes.Buffer
 
@@ -119,9 +125,11 @@ type LetStatement struct {
 }
 
 func (l LetStatement) statementNode() {}
+
 func (l LetStatement) TokenLiteral() string {
 	return l.Token.Literal
 }
+
 func (l LetStatement) String() string {
 	var out bytes.Buffer
 
@@ -137,9 +145,11 @@ type ReturnStatement struct {
 }
 
 func (r ReturnStatement) statementNode() {}
+
 func (r ReturnStatement) TokenLiteral() string {
 	return r.Token.Literal
 }
+
 func (r ReturnStatement) String() string {
 	var out bytes.Buffer
 
@@ -155,9 +165,11 @@ type ExpressionStatement struct {
 }
 
 func (e ExpressionStatement) statementNode() {}
+
 func (e ExpressionStatement) TokenLiteral() string {
 	return e.Token.Literal
 }
+
 func (e ExpressionStatement) String() string {
 	if e.Expression != nil {
 		return e.Expression.String()
@@ -173,9 +185,11 @@ type BlockStatement struct {
 }
 
 func (b *BlockStatement) statementNode() {}
+
 func (b *BlockStatement) TokenLiteral() string {
 	return b.Token.Literal
 }
+
 func (b *BlockStatement) String() string {
 	var out bytes.Buffer
 
@@ -194,9 +208,11 @@ type PrefixExpression struct {
 }
 
 func (p PrefixExpression) expressionNode() {}
+
 func (p PrefixExpression) TokenLiteral() string {
 	return p.Token.Literal
 }
+
 func (p PrefixExpression) String() string {
 	return fmt.Sprintf("(%s%s)", p.Operator, p.Right.String())
 }
@@ -210,9 +226,11 @@ type InfixExpression struct {
 }
 
 func (i InfixExpression) expressionNode() {}
+
 func (i InfixExpression) TokenLiteral() string {
 	return i.Token.Literal
 }
+
 func (i InfixExpression) String() string {
 	return fmt.Sprintf("(%s %s %s)", i.Left.String(), i.Operator, i.Right.String())
 }
@@ -226,9 +244,11 @@ type IfExpression struct {
 }
 
 func (i IfExpression) expressionNode() {}
+
 func (i IfExpression) TokenLiteral() string {
 	return i.Token.Literal
 }
+
 func (i IfExpression) String() string {
 	var out bytes.Buffer
 
@@ -249,9 +269,11 @@ type CallExpression struct {
 }
 
 func (c CallExpression) expressionNode() {}
+
 func (c CallExpression) TokenLiteral() string {
 	return c.Token.Literal
 }
+
 func (c CallExpression) String() string {
 	var out bytes.Buffer
 
