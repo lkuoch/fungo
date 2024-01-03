@@ -22,7 +22,7 @@ func (t *ParserTestSuite) testLetStatement(statement ast.Statement, name string)
 	t.Equal("let", tokenLiteral)
 
 	letStatement, ok := statement.(*ast.LetStatement)
-	t.True(ok)
+	t.True(ok, "*ast.LetStatement")
 
 	letStatementValue := letStatement.Name.Value
 	t.Equal(letStatementValue, name)
@@ -34,13 +34,13 @@ func (t *ParserTestSuite) testLetStatement(statement ast.Statement, name string)
 func (t *ParserTestSuite) testIntegerLiteral(ex ast.Expression, value int64) {
 	num, ok := ex.(*ast.IntegerLiteral)
 
-	t.True(ok)
+	t.True(ok, "*ast.IntegerLiteral")
 	t.Equal(value, num.Value)
 }
 
 func (t *ParserTestSuite) testIdentifier(exp ast.Expression, value string) {
 	identifier, ok := exp.(*ast.Identifier)
-	t.True(ok)
+	t.True(ok, "*ast.Identifier")
 
 	t.Equal(value, identifier.Value)
 	t.Equal(value, identifier.TokenLiteral())
@@ -48,7 +48,7 @@ func (t *ParserTestSuite) testIdentifier(exp ast.Expression, value string) {
 
 func (t *ParserTestSuite) testBooleanLiteral(exp ast.Expression, value bool) {
 	boolean, ok := exp.(*ast.Boolean)
-	t.True(ok)
+	t.True(ok, "*ast.Boolean")
 
 	t.Equal(boolean.Value, value)
 	t.Equal(boolean.TokenLiteral(), fmt.Sprintf("%t", value))
@@ -72,7 +72,7 @@ func (t *ParserTestSuite) testLiteralExpression(exp ast.Expression, expected int
 func (t *ParserTestSuite) testInfixExpression(exp ast.Expression, left interface{}, operator string, right interface{}) {
 	opExp, ok := exp.(*ast.InfixExpression)
 
-	t.True(ok)
+	t.True(ok, "*ast.InfixExpression")
 	t.testLiteralExpression(opExp.Left, left)
 
 	t.Equal(opExp.Operator, operator)
@@ -96,10 +96,10 @@ func (t *ParserTestSuite) TestBooleanExpression() {
 		t.Len(program.Statements, 1)
 
 		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-		t.True(ok)
+		t.True(ok, "*ast.ExpressionStatement")
 
 		boolean, ok := statement.Expression.(*ast.Boolean)
-		t.True(ok)
+		t.True(ok, "*ast.Boolean")
 		t.Equal(test.expected, boolean.Value)
 	}
 }
@@ -132,7 +132,7 @@ func (t *ParserTestSuite) TestParsingInfixExpressions() {
 		t.Len(program.Statements, 1)
 
 		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-		t.True(ok)
+		t.True(ok, "*ast.ExpressionStatement")
 
 		t.testInfixExpression(statement.Expression, test.lhs, test.operator, test.rhs)
 	}
@@ -200,10 +200,10 @@ func (t *ParserTestSuite) TestParsingPrefixExpressions() {
 		t.Len(program.Statements, 1)
 
 		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-		t.True(ok)
+		t.True(ok, "*ast.ExpressionStatement")
 
 		exp, ok := statement.Expression.(*ast.PrefixExpression)
-		t.True(ok)
+		t.True(ok, "*ast.PrefixExpression")
 
 		t.Equal(exp.Operator, test.operator)
 		t.testLiteralExpression(exp.Right, test.value)
@@ -252,7 +252,7 @@ func (t *ParserTestSuite) TestReturnStatement() {
 
 	for _, statement := range program.Statements {
 		returnStatement, ok := statement.(*ast.ReturnStatement)
-		t.True(ok)
+		t.True(ok, "*ast.ReturnStatement")
 
 		tokenLiteral := returnStatement.TokenLiteral()
 		t.Equal("return", tokenLiteral)
@@ -277,7 +277,7 @@ func (t *ParserTestSuite) TestIdentifierExpression() {
 		t.Len(program.Statements, 1)
 
 		statement, ok := program.Statements[0].(*ast.ReturnStatement)
-		t.True(ok)
+		t.True(ok, "*ast.ReturnStatement")
 
 		t.Equal("return", statement.TokenLiteral())
 		t.testLiteralExpression(statement.ReturnValue, test.expectedValue)
@@ -294,10 +294,10 @@ func (t *ParserTestSuite) TestIntergerLiteralExpression() {
 	t.Len(program.Statements, 1)
 
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	literal, ok := statement.Expression.(*ast.IntegerLiteral)
-	t.True(ok)
+	t.True(ok, "*ast.IntegerLiteral")
 
 	t.Equal(int64(5), literal.Value)
 	t.Equal("5", literal.TokenLiteral())
@@ -313,17 +313,17 @@ func (t *ParserTestSuite) TestIfExpression() {
 	t.Len(program.Statements, 1)
 
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	expression, ok := statement.Expression.(*ast.IfExpression)
-	t.True(ok)
+	t.True(ok, "*ast.IfExpression")
 
 	t.testInfixExpression(expression.Condition, "x", "<", "y")
 
 	t.Len(expression.IfCondition.Statements, 1)
 
 	ifCondition, ok := expression.IfCondition.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	t.testIdentifier(ifCondition.Expression, "x")
 	t.Nil(expression.ElseCondition)
@@ -339,22 +339,22 @@ func (t *ParserTestSuite) TestIfElseExpression() {
 	t.Len(program.Statements, 1)
 
 	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	exp, ok := stmt.Expression.(*ast.IfExpression)
-	t.True(ok)
+	t.True(ok, "*ast.IfExpression")
 
 	t.testInfixExpression(exp.Condition, "x", "<", "y")
 	t.Len(exp.IfCondition.Statements, 1)
 
 	ifCondition, ok := exp.IfCondition.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	t.testIdentifier(ifCondition.Expression, "x")
 	t.Len(exp.ElseCondition.Statements, 1)
 
 	elseCondition, ok := exp.ElseCondition.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	t.testIdentifier(elseCondition.Expression, "y")
 }
@@ -369,10 +369,10 @@ func (t *ParserTestSuite) TestFunctionLiteralParsing() {
 	t.Len(program.Statements, 1)
 
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	function, ok := statement.Expression.(*ast.FunctionLiteral)
-	t.True(ok)
+	t.True(ok, "*ast.FunctionLiteral")
 	t.Len(function.Parameters, 2)
 
 	t.testLiteralExpression(function.Parameters[0], "x")
@@ -381,7 +381,7 @@ func (t *ParserTestSuite) TestFunctionLiteralParsing() {
 	t.Len(function.Body.Statements, 1)
 
 	bodyStatement, ok := function.Body.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement)")
 
 	t.testInfixExpression(bodyStatement.Expression, "x", "+", "y")
 }
@@ -402,10 +402,10 @@ func (t *ParserTestSuite) TestFunctionParameterParsing() {
 		t.Empty(parser.Errors())
 
 		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-		t.True(ok)
+		t.True(ok, "*ast.ExpressionStatement")
 
 		function, ok := statement.Expression.(*ast.FunctionLiteral)
-		t.True(ok)
+		t.True(ok, "*ast.FunctionLiteral")
 
 		t.Equal(len(test.expectedParams), len(function.Parameters))
 
@@ -425,10 +425,10 @@ func (t *ParserTestSuite) TestExpressionParsing() {
 	t.Len(program.Statements, 1)
 
 	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
-	t.True(ok)
+	t.True(ok, "*ast.ExpressionStatement")
 
 	expression, ok := statement.Expression.(*ast.CallExpression)
-	t.True(ok)
+	t.True(ok, "*ast.CallExpression")
 
 	t.testIdentifier(expression.Function, "add")
 	t.Len(expression.Arguments, 3)
@@ -436,4 +436,20 @@ func (t *ParserTestSuite) TestExpressionParsing() {
 	t.testLiteralExpression(expression.Arguments[0], 1)
 	t.testInfixExpression(expression.Arguments[1], 2, "*", 3)
 	t.testInfixExpression(expression.Arguments[2], 4, "+", 5)
+}
+
+func (t *ParserTestSuite) TestStringLiteralParsing() {
+	input := `"hello world"`
+
+	parser := New(lexer.New(input))
+	program := parser.ParseProgram()
+	t.Empty(parser.Errors())
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	t.True(ok, "*ast.ExpressionStatement")
+
+	literal, ok := statement.Expression.(*ast.StringLiteral)
+	t.True(ok, "*ast.StringLiteral")
+
+	t.Equal("hello world", literal.Value)
 }

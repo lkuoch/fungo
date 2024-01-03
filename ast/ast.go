@@ -263,8 +263,8 @@ func (i IfExpression) String() string {
 
 /* =========== CallExpression: <expression> (<csv of expressions>) ========== */
 type CallExpression struct {
-	Token     token.Token // `(` token
-	Function  Expression  // Identifier / FunctionLiteral
+	Token     token.Token
+	Function  Expression
 	Arguments []Expression
 }
 
@@ -284,4 +284,20 @@ func (c CallExpression) String() string {
 	out.WriteString(c.Function.String() + "(" + strings.Join(args, ", ") + ")")
 
 	return out.String()
+}
+
+/* ================================= String ================================= */
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (s StringLiteral) expressionNode() {}
+
+func (s StringLiteral) TokenLiteral() string {
+	return s.Token.Literal
+}
+
+func (s StringLiteral) String() string {
+	return s.Token.Literal
 }

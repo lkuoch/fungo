@@ -72,7 +72,7 @@ func evalMinusOperatorExpression(right object.Object) object.Object {
 	return &object.Integer{Value: -value.Value}
 }
 
-func evalIntegerInfixExpression(operator string, leftNode, rightNode object.Object) object.Object {
+func evalIntegerInfixExpression(operator string, leftNode object.Object, rightNode object.Object) object.Object {
 	left, ok := leftNode.(*object.Integer)
 	if !ok {
 		return NULL
@@ -113,6 +113,25 @@ func evalIntegerInfixExpression(operator string, leftNode, rightNode object.Obje
 	}
 }
 
+func evalStringInfixExpression(operator string, leftNode object.Object, rightNode object.Object) object.Object {
+	left, ok := leftNode.(*object.String)
+	if !ok {
+		return NULL
+	}
+
+	right, ok := rightNode.(*object.String)
+	if !ok {
+		return NULL
+	}
+
+	switch operator {
+	case token.PLUS:
+		return &object.String{Value: left.Value + right.Value}
+	default:
+		return newError("unknown operator: %s %s %s", left.Type(), operator, right.Type())
+	}
+}
+
 func evalPrefixExpression(prefixExpression *ast.PrefixExpression, env *object.Environment) object.Object {
 	operator, right := prefixExpression.Operator, Eval(prefixExpression.Right, env)
 
@@ -146,6 +165,8 @@ func evalInfixExpression(infixExpression *ast.InfixExpression, env *object.Envir
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
+	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
+		return evalStringInfixExpression(operator, left, right)
 	case operator == token.EQ:
 		return nativeBoolToBooleanObject(left == right)
 	case operator == token.NOT_EQ:
@@ -211,6 +232,12 @@ func evalFunctionLiteral(fn *ast.FunctionLiteral, env *object.Environment) objec
 		Parameters: fn.Parameters,
 		Body:       fn.Body,
 		Env:        env,
+	}
+}
+
+func evalStringLiteral(str *ast.StringLiteral, _env *object.Environment) object.Object {
+	return &object.String{
+		Value: str.Value,
 	}
 }
 
@@ -286,6 +313,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.FunctionLiteral:
 		return evalFunctionLiteral(node, env)
+
+	case *ast.StringLiteral:
+		return evalStringLiteral(node, env)
 	}
 
 	return nil

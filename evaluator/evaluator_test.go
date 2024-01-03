@@ -24,21 +24,28 @@ func (t *EvaluatorTestSuite) testNullObject(actual object.Object) {
 
 func (t *EvaluatorTestSuite) testIntegerObject(expected int64, actual object.Object) {
 	result, ok := actual.(*object.Integer)
-	t.True(ok)
+	t.True(ok, "*object.Integer")
+
+	t.Equal(expected, result.Value)
+}
+
+func (t *EvaluatorTestSuite) testStringObject(expected string, actual object.Object) {
+	result, ok := actual.(*object.String)
+	t.True(ok, "*object.String")
 
 	t.Equal(expected, result.Value)
 }
 
 func (t *EvaluatorTestSuite) testBooleanObject(expected bool, actual object.Object) {
 	result, ok := actual.(*object.Boolean)
-	t.True(ok)
+	t.True(ok, "*object.Boolean")
 
 	t.Equal(expected, result.Value)
 }
 
 func (t *EvaluatorTestSuite) testFunctionObject(expectedParamsLen int, expectedParams []string, expectedBody string, actual object.Object) {
 	result, ok := actual.(*object.Function)
-	t.True(ok)
+	t.True(ok, "*object.Function")
 
 	t.Len(result.Parameters, expectedParamsLen)
 	t.Equal(expectedParams, utils.MapString(result.Parameters))
@@ -47,7 +54,7 @@ func (t *EvaluatorTestSuite) testFunctionObject(expectedParamsLen int, expectedP
 
 func (t *EvaluatorTestSuite) testErrorObject(expected string, actual object.Object) {
 	result, ok := actual.(*object.Error)
-	t.True(ok)
+	t.True(ok, "*object.Error")
 
 	t.Equal(expected, result.Message)
 }
@@ -222,6 +229,7 @@ func (t *EvaluatorTestSuite) TestErrorHandling() {
 			return 1;
 		 `, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
+		{`"Hello" - "World"`, "unknown operator: STRING - STRING"},
 	}
 
 	for _, test := range tests {
@@ -288,5 +296,33 @@ func (t *EvaluatorTestSuite) TestFunctionApplication() {
 	for _, test := range tests {
 		result := t.testEval(test.input)
 		t.testIntegerObject(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestStringLiteral() {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"hello world"`, "hello world"},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testStringObject(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestStringConcatenation() {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{`"Hello" + " " + "World"`, "Hello World"},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testStringObject(test.expected, result)
 	}
 }

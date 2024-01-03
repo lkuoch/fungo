@@ -17,6 +17,7 @@ const (
 	ERROR_OBJ      = "ERROR"
 	NOOP_OBJ       = "NOOP"
 	FUNCTION_OBJ   = "FUNCTION"
+	STRING_OBJ     = "STRING"
 )
 
 type Object interface {
@@ -113,6 +114,19 @@ func (f Function) Inspect() string {
 	out.WriteString("fn(" + strings.Join(params, ",") + ") {\n" + f.Body.String() + "\n}")
 
 	return out.String()
+}
+
+/* ================================= String ================================= */
+type String struct {
+	Value string
+}
+
+func (s String) Type() ObjectType {
+	return STRING_OBJ
+}
+
+func (s String) Inspect() string {
+	return s.Value
 }
 
 /* ================================== Error ================================= */
