@@ -69,7 +69,7 @@ func (t *EvaluatorTestSuite) testErrorObject(expected string, actual object.Obje
 }
 
 func (t *EvaluatorTestSuite) testEval(input string) object.Object {
-	parser := parser.New(lexer.New(input))
+	parser := parser.NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 	env := object.NewEnvironment()
 

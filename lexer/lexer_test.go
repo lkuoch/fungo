@@ -3,9 +3,19 @@ package lexer
 import (
 	"fungo/token"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
-func TestNextToken(t *testing.T) {
+type LexerTestSuite struct {
+	suite.Suite
+}
+
+func TestLexerTestSuite(t *testing.T) {
+	suite.Run(t, &LexerTestSuite{})
+}
+
+func (t *LexerTestSuite) TestNextToken() {
 	input := `
 		let five = 5;
 		let ten = 10;
@@ -29,6 +39,8 @@ func TestNextToken(t *testing.T) {
 
 		"foobar"
 		"foo bar"
+
+		[1, 2];
 	`
 
 	tests := []struct {
@@ -116,20 +128,23 @@ func TestNextToken(t *testing.T) {
 
 		{token.STRING, "foobar"},
 		{token.STRING, "foo bar"},
+
+		{token.LBRACKET, "["},
+		{token.INT, "1"},
+		{token.COMMA, ","},
+		{token.INT, "2"},
+		{token.RBRACKET, "]"},
+		{token.SEMICOLON, ";"},
+
 		{token.EOF, ""},
 	}
 
-	l := New(input)
+	l := NewLexer(input)
 
-	for i, tt := range tests {
-		tok := l.NextToken()
+	for _, test := range tests {
+		token := l.NextToken()
 
-		if tok.Type != tt.expectedType {
-			t.Fatalf("test[%d] - tokentype wrong. expected=%q, got=%q", i, tt.expectedType, tok.Type)
-		}
-
-		if tok.Literal != tt.expectedLiteral {
-			t.Fatalf("tests[%d] - literal wrong. expected=%q, got=%q", i, tt.expectedLiteral, tok.Literal)
-		}
+		t.Equal(test.expectedType, token.Type)
+		t.Equal(test.expectedLiteral, token.Literal)
 	}
 }

@@ -301,3 +301,47 @@ func (s StringLiteral) TokenLiteral() string {
 func (s StringLiteral) String() string {
 	return s.Token.Literal
 }
+
+/* ============================== ArrayLiteral ============================== */
+type ArrayLiteral struct {
+	Token    token.Token
+	Elements []Expression
+}
+
+func (a ArrayLiteral) expressionNode() {}
+
+func (a ArrayLiteral) TokenLiteral() string {
+	return a.Token.Literal
+}
+
+func (a ArrayLiteral) String() string {
+	var out bytes.Buffer
+
+	elements := []string{}
+	for _, element := range a.Elements {
+		elements = append(elements, element.String())
+	}
+
+	out.WriteString("[" + strings.Join(elements, ", ") + "]")
+	return out.String()
+}
+
+/* ============================= IndexExpression ============================ */
+type IndexExpression struct {
+	Token token.Token
+	Ref   Expression
+	Index Expression
+}
+
+func (i IndexExpression) expressionNode() {}
+
+func (i IndexExpression) TokenLiteral() string {
+	return i.Token.Literal
+}
+
+func (i IndexExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(" + i.Ref.String() + "[" + i.Index.String() + "])")
+	return out.String()
+}

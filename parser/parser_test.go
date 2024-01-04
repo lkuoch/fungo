@@ -89,7 +89,7 @@ func (t *ParserTestSuite) TestBooleanExpression() {
 	}
 
 	for _, test := range tests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 
 		t.Empty(parser.Errors())
@@ -125,7 +125,7 @@ func (t *ParserTestSuite) TestParsingInfixExpressions() {
 	}
 
 	for _, test := range tests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 
 		t.Empty(parser.Errors())
@@ -167,10 +167,12 @@ func (t *ParserTestSuite) TestOperatorPrecedenceParsing() {
 		{"a + add(b * c) + d", "((a + add((b * c))) + d)"},
 		{"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))", "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))"},
 		{"add(a + b + c * d / f + g)", "add((((a + b) + ((c * d) / f)) + g))"},
+		{"a * [1, 2, 3, 4][b * c] * d", "((a * ([1, 2, 3, 4][(b * c)])) * d)"},
+		{"add(a * b[2], b[1], 2 * [1, 2][1])", "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))"},
 	}
 
 	for _, test := range tests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 
 		t.Empty(parser.Errors())
@@ -193,7 +195,7 @@ func (t *ParserTestSuite) TestParsingPrefixExpressions() {
 	}
 
 	for _, test := range prefixTests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 
 		t.Empty(parser.Errors())
@@ -222,7 +224,7 @@ func (t *ParserTestSuite) TestLetStatements() {
 	}
 
 	for _, test := range tests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 
 		t.Empty(parser.Errors())
@@ -244,7 +246,7 @@ func (t *ParserTestSuite) TestReturnStatement() {
 		return 993322;
 	`
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 
 	t.Empty(parser.Errors())
@@ -270,7 +272,7 @@ func (t *ParserTestSuite) TestIdentifierExpression() {
 	}
 
 	for _, test := range tests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 
 		t.Empty(parser.Errors())
@@ -287,7 +289,7 @@ func (t *ParserTestSuite) TestIdentifierExpression() {
 func (t *ParserTestSuite) TestIntergerLiteralExpression() {
 	input := "5;"
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 
 	t.Empty(parser.Errors())
@@ -306,7 +308,7 @@ func (t *ParserTestSuite) TestIntergerLiteralExpression() {
 func (t *ParserTestSuite) TestIfExpression() {
 	input := `if (x < y) { x }`
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 
 	t.Empty(parser.Errors())
@@ -332,7 +334,7 @@ func (t *ParserTestSuite) TestIfExpression() {
 func (t *ParserTestSuite) TestIfElseExpression() {
 	input := `if (x < y) { x } else { y }`
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 
 	t.Empty(parser.Errors())
@@ -362,7 +364,7 @@ func (t *ParserTestSuite) TestIfElseExpression() {
 func (t *ParserTestSuite) TestFunctionLiteralParsing() {
 	input := `fn(x, y) { x + y; }`
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 	t.Empty(parser.Errors())
 
@@ -397,7 +399,7 @@ func (t *ParserTestSuite) TestFunctionParameterParsing() {
 	}
 
 	for _, test := range tests {
-		parser := New(lexer.New(test.input))
+		parser := NewParser(lexer.NewLexer(test.input))
 		program := parser.ParseProgram()
 		t.Empty(parser.Errors())
 
@@ -418,7 +420,7 @@ func (t *ParserTestSuite) TestFunctionParameterParsing() {
 func (t *ParserTestSuite) TestExpressionParsing() {
 	input := "add(1, 2 * 3, 4 + 5);"
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 	t.Empty(parser.Errors())
 
@@ -441,7 +443,7 @@ func (t *ParserTestSuite) TestExpressionParsing() {
 func (t *ParserTestSuite) TestStringLiteralParsing() {
 	input := `"hello world"`
 
-	parser := New(lexer.New(input))
+	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
 	t.Empty(parser.Errors())
 
@@ -452,4 +454,40 @@ func (t *ParserTestSuite) TestStringLiteralParsing() {
 	t.True(ok, "*ast.StringLiteral")
 
 	t.Equal("hello world", literal.Value)
+}
+
+func (t *ParserTestSuite) TestParsingArrayLiterals() {
+	input := `[1, 2 * 2, 3 + 3]`
+
+	parser := NewParser(lexer.NewLexer(input))
+	program := parser.ParseProgram()
+	t.Empty(parser.Errors())
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	t.True(ok, "*ast.ExpressionStatement")
+
+	array, ok := statement.Expression.(*ast.ArrayLiteral)
+	t.True(ok, "*ast.ArrayLiteral")
+	t.Len(array.Elements, 3)
+
+	t.testIntegerLiteral(array.Elements[0], 1)
+	t.testInfixExpression(array.Elements[1], 2, "*", 2)
+	t.testInfixExpression(array.Elements[2], 3, "+", 3)
+}
+
+func (t *ParserTestSuite) TestParsingIndexExpression() {
+	input := `myArray[1 + 1]`
+
+	parser := NewParser(lexer.NewLexer(input))
+	program := parser.ParseProgram()
+	t.Empty(parser.Errors())
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	t.True(ok, "*ast.ExpressionStatement")
+
+	indexExpression, ok := statement.Expression.(*ast.IndexExpression)
+	t.True(ok, "*ast.IndexExpression")
+
+	t.Equal("myArray", indexExpression.Ref.String())
+	t.testInfixExpression(indexExpression.Index, 1, "+", 1)
 }

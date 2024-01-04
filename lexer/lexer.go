@@ -10,7 +10,7 @@ type Lexer struct {
 	char         byte // current char
 }
 
-func New(input string) *Lexer {
+func NewLexer(input string) *Lexer {
 	lexer := &Lexer{input: input, position: 0, readPosition: 0, char: 0}
 	lexer.readChar()
 
@@ -148,6 +148,10 @@ func (l *Lexer) NextToken() token.Token {
 		newToken = createNewToken(token.LBRACE, l.char)
 	case '}':
 		newToken = createNewToken(token.RBRACE, l.char)
+	case '[':
+		newToken = createNewToken(token.LBRACKET, l.char)
+	case ']':
+		newToken = createNewToken(token.RBRACKET, l.char)
 
 	case '"':
 		newToken = token.Token{

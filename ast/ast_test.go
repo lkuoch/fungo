@@ -3,9 +3,19 @@ package ast
 import (
 	"fungo/token"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
 )
 
-func TestString(t *testing.T) {
+type AstTestSuite struct {
+	suite.Suite
+}
+
+func TestAstTestSuite(t *testing.T) {
+	suite.Run(t, &AstTestSuite{})
+}
+
+func (t *AstTestSuite) TestString() {
 	program := &Program{
 		Statements: []Statement{
 			&LetStatement{
@@ -22,8 +32,5 @@ func TestString(t *testing.T) {
 		},
 	}
 
-	stringOutput := program.String()
-	if stringOutput != "let myVar = anotherVar;" {
-		t.Errorf("program.String() wrong. got=%q", stringOutput)
-	}
+	t.Equal("let myVar = anotherVar;", program.String())
 }
