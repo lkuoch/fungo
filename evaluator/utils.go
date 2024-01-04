@@ -45,15 +45,17 @@ func unwrapReturnValue(obj object.Object) object.Object {
 }
 
 func applyFunction(fn object.Object, args []object.Object) object.Object {
-	function, ok := fn.(*object.Function)
-	if !ok {
+	switch fn := fn.(type) {
+	case *object.Function:
+		evaluated := Eval(fn.Body, extendFunctionEnv(fn, args))
+		return unwrapReturnValue(evaluated)
+
+	case *object.BuiltIn:
+		return fn.Fn(args...)
+
+	default:
 		return newError("not a function: %s", fn.Type())
 	}
-
-	extendedEnv := extendFunctionEnv(function, args)
-	evaluated := Eval(function.Body, extendedEnv)
-
-	return unwrapReturnValue(evaluated)
 }
 
 func newError(format string, args ...interface{}) *object.Error {

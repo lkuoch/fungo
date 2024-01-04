@@ -52,6 +52,15 @@ func (t *EvaluatorTestSuite) testFunctionObject(expectedParamsLen int, expectedP
 	t.Equal(expectedBody, result.Body.String())
 }
 
+func (t *EvaluatorTestSuite) testBuiltInFunctionObject(expected interface{}, actual object.Object) {
+	switch expected := expected.(type) {
+	case int:
+		t.testIntegerObject(int64(expected), actual)
+	case string:
+		t.testErrorObject(expected, actual)
+	}
+}
+
 func (t *EvaluatorTestSuite) testErrorObject(expected string, actual object.Object) {
 	result, ok := actual.(*object.Error)
 	t.True(ok, "*object.Error")
@@ -324,5 +333,23 @@ func (t *EvaluatorTestSuite) TestStringConcatenation() {
 	for _, test := range tests {
 		result := t.testEval(test.input)
 		t.testStringObject(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestBuiltInFunctions() {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`len("")`, 0},
+		{`len("four")`, 4},
+		{`len("hello world")`, 11},
+		{`len(1)`, "argument to `len` not supported. got=`INTEGER`"},
+		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testBuiltInFunctionObject(test.expected, result)
 	}
 }

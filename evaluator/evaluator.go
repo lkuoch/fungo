@@ -213,6 +213,10 @@ func evalIdentifier(identifier *ast.Identifier, env *object.Environment) object.
 		return value
 	}
 
+	if builtIn, ok := builtInsMap[identifier.Value]; ok {
+		return builtIn
+	}
+
 	return newError("identifier not found: " + identifier.Value)
 }
 
