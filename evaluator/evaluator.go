@@ -257,6 +257,32 @@ func evalArrayLiteral(array *ast.ArrayLiteral, env *object.Environment) object.O
 	}
 }
 
+func evalHashLiteral(node *ast.HashLiteral, env *object.Environment) object.Object {
+	pairs := make(map[object.HashKey]object.HashPair)
+
+	for keyNode, valueNode := range node.Pairs {
+		key := Eval(keyNode, env)
+		if isError(key) {
+			return key
+		}
+
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return newError("unusable as hash key: %s", key.Type())
+		}
+
+		value := Eval(valueNode, env)
+		if isError(value) {
+			return value
+		}
+
+		hashed := hashKey.HashKey()
+		pairs[hashed] = object.HashPair{Key: key, Value: value}
+	}
+
+	return &object.Hash{Pairs: pairs}
+}
+
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
 	var result []object.Object
 
@@ -298,6 +324,21 @@ func evalArrayIndexExpression(ref *object.Array, index *object.Integer) object.O
 	return array[idx]
 }
 
+func evalHashIndexExpression(hash *object.Hash, index object.Object) object.Object {
+	key, ok := index.(object.Hashable)
+
+	if !ok {
+		return newError("unusable as hash key: `%s`", index.Type())
+	}
+
+	pair, ok := hash.Pairs[key.HashKey()]
+	if !ok {
+		return NULL
+	}
+
+	return pair.Value
+}
+
 func evalIndexExpression(exp *ast.IndexExpression, env *object.Environment) object.Object {
 	ref := Eval(exp.Ref, env)
 	if isError(ref) {
@@ -312,6 +353,8 @@ func evalIndexExpression(exp *ast.IndexExpression, env *object.Environment) obje
 	switch {
 	case ref.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
 		return evalArrayIndexExpression(ref.(*object.Array), index.(*object.Integer))
+	case ref.Type() == object.HASH_OBJ:
+		return evalHashIndexExpression(ref.(*object.Hash), index)
 	default:
 		return newError("index operator not supported: %s", ref.Type())
 	}
@@ -369,6 +412,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.ArrayLiteral:
 		return evalArrayLiteral(node, env)
+
+	case *ast.HashLiteral:
+		return evalHashLiteral(node, env)
 	}
 
 	return nil

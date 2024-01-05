@@ -102,6 +102,29 @@ func (t *EvaluatorTestSuite) testArrayIndexExpression(expected interface{}, actu
 	}
 }
 
+func (t *EvaluatorTestSuite) testHashLiteral(expected map[object.HashKey]int64, actual object.Object) {
+	result, ok := actual.(*object.Hash)
+	t.True(ok, "*object.Hash")
+
+	t.Equal(len(expected), len(result.Pairs))
+
+	for expectedKey, expectedValue := range expected {
+		pair, ok := result.Pairs[expectedKey]
+		t.True(ok, "hash.Pairs[expectedKey]")
+
+		t.testIntegerObject(expectedValue, pair.Value)
+	}
+}
+
+func (t *EvaluatorTestSuite) testHashIndexExpression(expected interface{}, actual object.Object) {
+	switch expected := expected.(type) {
+	case int:
+		t.testIntegerObject(int64(expected), actual)
+	default:
+		t.testNullObject(actual)
+	}
+}
+
 func (t *EvaluatorTestSuite) testErrorObject(expected string, actual object.Object) {
 	result, ok := actual.(*object.Error)
 	t.True(ok, "*object.Error")
@@ -280,6 +303,7 @@ func (t *EvaluatorTestSuite) TestErrorHandling() {
 		 `, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
 		{`"Hello" - "World"`, "unknown operator: STRING - STRING"},
+		{`{"name": "Law"}[fn(x) { x }];`, "unusable as hash key: `FUNCTION`"},
 	}
 
 	for _, test := range tests {
@@ -441,5 +465,59 @@ func (t *EvaluatorTestSuite) TestArrayIndexExpressions() {
 	for _, test := range tests {
 		result := t.testEval(test.input)
 		t.testArrayIndexExpression(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestHashLiterals() {
+	tests := []struct {
+		input    string
+		expected map[object.HashKey]int64
+	}{
+		{
+			`
+			let two = "two";
+			{
+				"one": 10 - 9,
+				two: 1 + 1,
+				"thr" + "ee": 6 / 2,
+				4: 4,
+				true: 5,
+				false: 6
+			}
+		`,
+			map[object.HashKey]int64{
+				(&object.String{Value: "one"}).HashKey():   1,
+				(&object.String{Value: "two"}).HashKey():   2,
+				(&object.String{Value: "three"}).HashKey(): 3,
+				(&object.Integer{Value: 4}).HashKey():      4,
+				TRUE.HashKey():                             5,
+				FALSE.HashKey():                            6,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testHashLiteral(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestHashIndexExperssions() {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{`{"foo": 5}["foo"]`, 5},
+		{`{"foo": 5}["bar"]`, nil},
+		{`let key = "foo"; {"foo": 5}[key]`, 5},
+		{`{}["foo"]`, nil},
+		{`{5: 5}[5]`, 5},
+		{`{true: 5}[true]`, 5},
+		{`{false: 5}[false]`, 5},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testHashIndexExpression(test.expected, result)
 	}
 }

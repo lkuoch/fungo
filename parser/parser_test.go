@@ -491,3 +491,56 @@ func (t *ParserTestSuite) TestParsingIndexExpression() {
 	t.Equal("myArray", indexExpression.Ref.String())
 	t.testInfixExpression(indexExpression.Index, 1, "+", 1)
 }
+
+func (t *ParserTestSuite) TestParsingHashLiteralStringKeys() {
+	tests := []struct {
+		input    string
+		expected map[string]int64
+	}{
+		{
+			input: `{"one": 1, "two": 2, "three": 3}`,
+			expected: map[string]int64{
+				"one":   1,
+				"two":   2,
+				"three": 3,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		parser := NewParser(lexer.NewLexer(test.input))
+		program := parser.ParseProgram()
+		t.Empty(parser.Errors())
+
+		statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+		t.True(ok, "*ast.ExpressionStatement")
+
+		result, ok := statement.Expression.(*ast.HashLiteral)
+		t.True(ok, "*ast.HashLiteral")
+
+		t.Equal(len(result.Pairs), len(test.expected))
+
+		for key, value := range result.Pairs {
+			literal, ok := key.(*ast.StringLiteral)
+			t.True(ok, "*ast.StringLiteral")
+
+			t.testIntegerLiteral(value, test.expected[literal.String()])
+		}
+	}
+}
+
+func (t *ParserTestSuite) TestParsingEmptyHashLiteral() {
+	input := `{}`
+
+	parser := NewParser(lexer.NewLexer(input))
+	program := parser.ParseProgram()
+	t.Empty(parser.Errors())
+
+	statement, ok := program.Statements[0].(*ast.ExpressionStatement)
+	t.True(ok, "*ast.ExpressionStatement")
+
+	result, ok := statement.Expression.(*ast.HashLiteral)
+	t.True(ok, "*ast.HashLiteral")
+
+	t.Len(result.Pairs, 0)
+}

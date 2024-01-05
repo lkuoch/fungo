@@ -1,6 +1,9 @@
 package evaluator
 
-import "fungo/object"
+import (
+	"fmt"
+	"fungo/object"
+)
 
 func builtIn_len(args ...object.Object) object.Object {
 	if len(args) != 1 {
@@ -93,6 +96,14 @@ func builtIn_push(args ...object.Object) object.Object {
 	return &object.Array{Elements: elements}
 }
 
+func builtIn_print(args ...object.Object) object.Object {
+	for _, arg := range args {
+		fmt.Println(arg.String())
+	}
+
+	return NULL
+}
+
 /* ====================== Map of all built in functions ===================== */
 var builtInsMap = map[string]*object.BuiltIn{
 	"len": {
@@ -114,5 +125,9 @@ var builtInsMap = map[string]*object.BuiltIn{
 	"push": {
 		FnName: "push",
 		Fn:     builtIn_push,
+	},
+	"print": {
+		FnName: "print",
+		Fn:     builtIn_print,
 	},
 }

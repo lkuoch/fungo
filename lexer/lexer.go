@@ -139,6 +139,8 @@ func (l *Lexer) NextToken() token.Token {
 		newToken = createNewToken(token.COMMA, l.char)
 	case ';':
 		newToken = createNewToken(token.SEMICOLON, l.char)
+	case ':':
+		newToken = createNewToken(token.COLON, l.char)
 
 	case '(':
 		newToken = createNewToken(token.LPAREN, l.char)

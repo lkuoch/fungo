@@ -5,3 +5,6 @@ test:
 
 test-force:
 	go test -count=1 ./...
+
+run:
+	go run main.go

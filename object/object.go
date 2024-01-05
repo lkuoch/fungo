@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"fungo/ast"
+	"hash/fnv"
 	"strings"
 )
 
@@ -20,6 +21,7 @@ const (
 	STRING_OBJ     = "STRING"
 	BUILTIN_OBJ    = "BUILTIN"
 	ARRAY_OBJ      = "ARRAY"
+	HASH_OBJ       = "HASH"
 )
 
 type Object interface {
@@ -27,13 +29,50 @@ type Object interface {
 	String() string
 }
 
+/* ================================== Hash ================================== */
+type Hashable interface {
+	HashKey() HashKey
+}
+
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
+type HashPair struct {
+	Key   Object
+	Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h Hash) Type() ObjectType {
+	return HASH_OBJ
+}
+
+func (h Hash) String() string {
+	var out bytes.Buffer
+
+	pairs := []string{}
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s: %s", pair.Key.String(), pair.Value.String()))
+	}
+
+	out.WriteString("{" + strings.Join(pairs, ", ") + "}")
+
+	return out.String()
+}
+
 /* ================================= Integer ================================ */
 type Integer struct {
 	Object
+	Hashable
 	Value int64
 }
 
-func (u Integer) Type() ObjectType {
+func (i Integer) Type() ObjectType {
 	return INTEGER_OBJ
 }
 
@@ -41,9 +80,17 @@ func (i Integer) String() string {
 	return fmt.Sprintf("%d", i.Value)
 }
 
+func (i Integer) HashKey() HashKey {
+	return HashKey{
+		Type:  i.Type(),
+		Value: uint64(i.Value),
+	}
+}
+
 /* ================================= Boolean ================================ */
 type Boolean struct {
 	Object
+	Hashable
 	Value bool
 }
 
@@ -53,6 +100,21 @@ func (b Boolean) Type() ObjectType {
 
 func (b Boolean) String() string {
 	return fmt.Sprintf("%t", b.Value)
+}
+
+func (b Boolean) HashKey() HashKey {
+	var value uint64
+
+	if b.Value {
+		value = 1
+	} else {
+		value = 0
+	}
+
+	return HashKey{
+		Type:  b.Type(),
+		Value: value,
+	}
 }
 
 /* ================================== Null ================================== */
@@ -96,6 +158,7 @@ func (n Noop) String() string {
 
 /* ================================ Function ================================ */
 type Function struct {
+	Object
 	Parameters []*ast.Identifier
 	Body       *ast.BlockStatement
 	Env        *Environment
@@ -120,6 +183,8 @@ func (f Function) String() string {
 
 /* ================================= String ================================= */
 type String struct {
+	Object
+	Hashable
 	Value string
 }
 
@@ -131,8 +196,19 @@ func (s String) String() string {
 	return s.Value
 }
 
+func (s String) HashKey() HashKey {
+	hash := fnv.New64a()
+	hash.Write([]byte(s.Value))
+
+	return HashKey{
+		Type:  s.Type(),
+		Value: hash.Sum64(),
+	}
+}
+
 /* ================================= BuiltIn ================================ */
 type BuiltIn struct {
+	Object
 	Fn     func(args ...Object) Object
 	FnName string
 }
@@ -147,6 +223,7 @@ func (b BuiltIn) String() string {
 
 /* ================================== Array ================================= */
 type Array struct {
+	Object
 	Elements []Object
 }
 
@@ -168,6 +245,7 @@ func (a Array) String() string {
 
 /* ================================== Error ================================= */
 type Error struct {
+	Object
 	Message string
 }
 
