@@ -245,6 +245,18 @@ func evalStringLiteral(str *ast.StringLiteral, _env *object.Environment) object.
 	}
 }
 
+func evalArrayLiteral(array *ast.ArrayLiteral, env *object.Environment) object.Object {
+	elements := evalExpressions(array.Elements, env)
+
+	if len(elements) == 1 && isError(elements[0]) {
+		return elements[0]
+	}
+
+	return &object.Array{
+		Elements: elements,
+	}
+}
+
 func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Object {
 	var result []object.Object
 
@@ -272,6 +284,37 @@ func evalCallExpression(exp *ast.CallExpression, env *object.Environment) object
 	}
 
 	return applyFunction(fn, args)
+}
+
+func evalArrayIndexExpression(ref *object.Array, index *object.Integer) object.Object {
+	idx := index.Value
+	array := ref.Elements
+	max := int64(len(array) - 1)
+
+	if idx < 0 || idx > max {
+		return NULL
+	}
+
+	return array[idx]
+}
+
+func evalIndexExpression(exp *ast.IndexExpression, env *object.Environment) object.Object {
+	ref := Eval(exp.Ref, env)
+	if isError(ref) {
+		return ref
+	}
+
+	index := Eval(exp.Index, env)
+	if isError(index) {
+		return index
+	}
+
+	switch {
+	case ref.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
+		return evalArrayIndexExpression(ref.(*object.Array), index.(*object.Integer))
+	default:
+		return newError("index operator not supported: %s", ref.Type())
+	}
 }
 
 func Eval(node ast.Node, env *object.Environment) object.Object {
@@ -305,6 +348,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.CallExpression:
 		return evalCallExpression(node, env)
 
+	case *ast.IndexExpression:
+		return evalIndexExpression(node, env)
+
 	// Values
 	case *ast.IntegerLiteral:
 		return evalIntegerLiteral(node)
@@ -320,6 +366,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 
 	case *ast.StringLiteral:
 		return evalStringLiteral(node, env)
+
+	case *ast.ArrayLiteral:
+		return evalArrayLiteral(node, env)
 	}
 
 	return nil

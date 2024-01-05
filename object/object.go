@@ -19,11 +19,12 @@ const (
 	FUNCTION_OBJ   = "FUNCTION"
 	STRING_OBJ     = "STRING"
 	BUILTIN_OBJ    = "BUILTIN"
+	ARRAY_OBJ      = "ARRAY"
 )
 
 type Object interface {
 	Type() ObjectType
-	Inspect() string
+	String() string
 }
 
 /* ================================= Integer ================================ */
@@ -36,7 +37,7 @@ func (u Integer) Type() ObjectType {
 	return INTEGER_OBJ
 }
 
-func (i Integer) Inspect() string {
+func (i Integer) String() string {
 	return fmt.Sprintf("%d", i.Value)
 }
 
@@ -50,7 +51,7 @@ func (b Boolean) Type() ObjectType {
 	return BOOLEAN_OBJ
 }
 
-func (b Boolean) Inspect() string {
+func (b Boolean) String() string {
 	return fmt.Sprintf("%t", b.Value)
 }
 
@@ -63,7 +64,7 @@ func (n Null) Type() ObjectType {
 	return NULL_OBJ
 }
 
-func (n Null) Inspect() string {
+func (n Null) String() string {
 	return "null"
 }
 
@@ -76,8 +77,8 @@ func (r ReturnValue) Type() ObjectType {
 	return RETURN_VAL_OBJ
 }
 
-func (r ReturnValue) Inspect() string {
-	return r.Value.Inspect()
+func (r ReturnValue) String() string {
+	return r.Value.String()
 }
 
 /* ================================== NOOP ================================== */
@@ -89,7 +90,7 @@ func (n Noop) Type() ObjectType {
 	return NOOP_OBJ
 }
 
-func (n Noop) Inspect() string {
+func (n Noop) String() string {
 	return "noop"
 }
 
@@ -104,7 +105,7 @@ func (f Function) Type() ObjectType {
 	return FUNCTION_OBJ
 }
 
-func (f Function) Inspect() string {
+func (f Function) String() string {
 	var out bytes.Buffer
 
 	params := []string{}
@@ -126,23 +127,43 @@ func (s String) Type() ObjectType {
 	return STRING_OBJ
 }
 
-func (s String) Inspect() string {
+func (s String) String() string {
 	return s.Value
 }
 
 /* ================================= BuiltIn ================================ */
-type BuiltInFunction func(args ...Object) Object
-
 type BuiltIn struct {
-	Fn BuiltInFunction
+	Fn     func(args ...Object) Object
+	FnName string
 }
 
 func (b BuiltIn) Type() ObjectType {
 	return BUILTIN_OBJ
 }
 
-func (b BuiltIn) Inspect() string {
-	return "built-in function"
+func (b BuiltIn) String() string {
+	return fmt.Sprintf("Built-in function: %s", b.FnName)
+}
+
+/* ================================== Array ================================= */
+type Array struct {
+	Elements []Object
+}
+
+func (a Array) Type() ObjectType {
+	return ARRAY_OBJ
+}
+
+func (a Array) String() string {
+	var out bytes.Buffer
+
+	elements := []string{}
+	for _, element := range a.Elements {
+		elements = append(elements, element.String())
+	}
+
+	out.WriteString("[" + strings.Join(elements, ", ") + "]")
+	return out.String()
 }
 
 /* ================================== Error ================================= */
@@ -154,6 +175,6 @@ func (e Error) Type() ObjectType {
 	return ERROR_OBJ
 }
 
-func (e Error) Inspect() string {
+func (e Error) String() string {
 	return "⛔️ ERROR: " + e.Message
 }

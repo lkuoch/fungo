@@ -43,21 +43,62 @@ func (t *EvaluatorTestSuite) testBooleanObject(expected bool, actual object.Obje
 	t.Equal(expected, result.Value)
 }
 
-func (t *EvaluatorTestSuite) testFunctionObject(expectedParamsLen int, expectedParams []string, expectedBody string, actual object.Object) {
+func (t *EvaluatorTestSuite) testFunctionObject(expectedParams []string, expectedBody string, actual object.Object) {
 	result, ok := actual.(*object.Function)
 	t.True(ok, "*object.Function")
 
-	t.Len(result.Parameters, expectedParamsLen)
+	t.Equal(len(expectedParams), len(result.Parameters))
 	t.Equal(expectedParams, utils.MapString(result.Parameters))
 	t.Equal(expectedBody, result.Body.String())
+}
+
+func (t *EvaluatorTestSuite) testArrayObject(expected interface{}, actual object.Object) {
+	result, ok := actual.(*object.Array)
+	t.True(ok, "*object.Array")
+
+	switch expected := expected.(type) {
+	case []int:
+		t.Equal(len(expected), len(result.Elements))
+		t.Equal(expected, utils.MapInt(result.Elements))
+	case []string:
+		t.Equal(len(expected), len(result.Elements))
+		t.Equal(expected, utils.MapString(result.Elements))
+	default:
+		t.Fail("testArrayObject edge case not handled", expected)
+	}
 }
 
 func (t *EvaluatorTestSuite) testBuiltInFunctionObject(expected interface{}, actual object.Object) {
 	switch expected := expected.(type) {
 	case int:
 		t.testIntegerObject(int64(expected), actual)
+	case nil:
+		t.testNullObject(actual)
 	case string:
 		t.testErrorObject(expected, actual)
+	case []int:
+	case []string:
+		t.testArrayObject(expected, actual)
+
+	default:
+		t.Fail("BuiltInFunction edge case not handled", expected)
+	}
+}
+
+func (t *EvaluatorTestSuite) testArrayLiteral(expected []string, actual object.Object) {
+	result, ok := actual.(*object.Array)
+	t.True(ok, "*object.Array")
+
+	t.Equal(len(expected), len(result.Elements))
+	t.Equal(expected, utils.MapString(result.Elements))
+}
+
+func (t *EvaluatorTestSuite) testArrayIndexExpression(expected interface{}, actual object.Object) {
+	switch expected := expected.(type) {
+	case int:
+		t.testIntegerObject(int64(expected), actual)
+	default:
+		t.testNullObject(actual)
 	}
 }
 
@@ -266,17 +307,16 @@ func (t *EvaluatorTestSuite) TestLetStatement() {
 
 func (t *EvaluatorTestSuite) TestFuncObject() {
 	tests := []struct {
-		input             string
-		expectedParamsLen int
-		expectedParams    []string
-		expectedBody      string
+		input          string
+		expectedParams []string
+		expectedBody   string
 	}{
-		{"fn(x) { x + 2; };", 1, []string{"x"}, "(x + 2)"},
+		{"fn(x) { x + 2; };", []string{"x"}, "(x + 2)"},
 	}
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
-		t.testFunctionObject(test.expectedParamsLen, test.expectedParams, test.expectedBody, result)
+		t.testFunctionObject(test.expectedParams, test.expectedBody, result)
 	}
 }
 
@@ -346,10 +386,60 @@ func (t *EvaluatorTestSuite) TestBuiltInFunctions() {
 		{`len("hello world")`, 11},
 		{`len(1)`, "argument to `len` not supported. got=`INTEGER`"},
 		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
+		{`len([1, 2, 3])`, 3},
+		{`len([])`, 0},
+		{`first([1, 2, 3])`, 1},
+		{`first([])`, nil},
+		{`first(1)`, "argument to `first` must be `ARRAY`, got=`INTEGER`"},
+		{`last([1, 2, 3])`, 3},
+		{`last([])`, nil},
+		{`last(1)`, "argument to `last` must be `ARRAY`, got=`INTEGER`"},
+		{`rest([1, 2, 3])`, []int{2, 3}},
+		{`rest([])`, nil},
+		{`push([], 1)`, []int{1}},
+		{`push([], "hello")`, []string{"hello"}},
+		{`push(1, 1)`, "argument to `push` must be `ARRAY`, got=`INTEGER`"},
 	}
 
 	for _, test := range tests {
 		result := t.testEval(test.input)
 		t.testBuiltInFunctionObject(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestArrayLiterals() {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{`[1, 2 * 2, 3 + 3]`, []string{"1", "4", "6"}},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testArrayLiteral(test.expected, result)
+	}
+}
+
+func (t *EvaluatorTestSuite) TestArrayIndexExpressions() {
+	tests := []struct {
+		input    string
+		expected interface{}
+	}{
+		{"[1, 2, 3][0]", 1},
+		{"[1, 2, 3][1]", 2},
+		{"[1, 2, 3][2]", 3},
+		{"let i = 0; [1][i];", 1},
+		{"[1, 2, 3][1 + 1];", 3},
+		{"let myArray = [1, 2, 3]; myArray[2];", 3},
+		{"let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];", 6},
+		{"let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]", 2},
+		{"[1, 2, 3][3]", nil},
+		{"[1, 2, 3][-1]", nil},
+	}
+
+	for _, test := range tests {
+		result := t.testEval(test.input)
+		t.testArrayIndexExpression(test.expected, result)
 	}
 }
