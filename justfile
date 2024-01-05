@@ -1,10 +1,10 @@
 # This is a justfile. See https://github.com/casey/just
 
 test:
-	go test ./...
+  go test ./...
 
 test-force:
-	go test -count=1 ./...
+  go test -count=1 ./...
 
 run:
-	go run main.go
+  go run main.go

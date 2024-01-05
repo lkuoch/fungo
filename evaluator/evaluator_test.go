@@ -265,14 +265,14 @@ func (t *EvaluatorTestSuite) TestReturnStatements() {
 		{"return 2 * 5; 9", 10},
 		{"9; return 2 * 5;", 10},
 		{`
-			if (10 > 1) {
-				if (10 > 1) {
-					return 10;
-				}
-			}
+      if (10 > 1) {
+        if (10 > 1) {
+          return 10;
+        }
+      }
 
-			return 1;
-		`, 10},
+      return 1;
+    `, 10},
 	}
 
 	for _, test := range tests {
@@ -293,14 +293,14 @@ func (t *EvaluatorTestSuite) TestErrorHandling() {
 		{"5; true + false; 5", "unknown operator: BOOLEAN + BOOLEAN"},
 		{"if (10 > 1) { true + false; }", "unknown operator: BOOLEAN + BOOLEAN"},
 		{`
-			if (10 > 1) {
-				if (10 > 1) {
-					return true + false;
-				}
-			}
+      if (10 > 1) {
+        if (10 > 1) {
+          return true + false;
+        }
+      }
 
-			return 1;
-		 `, "unknown operator: BOOLEAN + BOOLEAN"},
+      return 1;
+     `, "unknown operator: BOOLEAN + BOOLEAN"},
 		{"foobar", "identifier not found: foobar"},
 		{`"Hello" - "World"`, "unknown operator: STRING - STRING"},
 		{`{"name": "Law"}[fn(x) { x }];`, "unusable as hash key: `FUNCTION`"},
@@ -356,13 +356,13 @@ func (t *EvaluatorTestSuite) TestFunctionApplication() {
 		{"let add = fn(x, y) { return x + y; }; add(5 + 5, add(5, 5));", 20},
 		{"fn(x) { x; }(5)", 5},
 		{`
-			let newAdder = fn(x) {
-				fn(y) { x + y };
-			};
+      let newAdder = fn(x) {
+        fn(y) { x + y };
+      };
 
-			let addTwo = newAdder(2);
-			addTwo(2);
-		 `, 4,
+      let addTwo = newAdder(2);
+      addTwo(2);
+     `, 4,
 		},
 	}
 
@@ -475,16 +475,16 @@ func (t *EvaluatorTestSuite) TestHashLiterals() {
 	}{
 		{
 			`
-			let two = "two";
-			{
-				"one": 10 - 9,
-				two: 1 + 1,
-				"thr" + "ee": 6 / 2,
-				4: 4,
-				true: 5,
-				false: 6
-			}
-		`,
+      let two = "two";
+      {
+        "one": 10 - 9,
+        two: 1 + 1,
+        "thr" + "ee": 6 / 2,
+        4: 4,
+        true: 5,
+        false: 6
+      }
+    `,
 			map[object.HashKey]int64{
 				(&object.String{Value: "one"}).HashKey():   1,
 				(&object.String{Value: "two"}).HashKey():   2,

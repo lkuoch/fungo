@@ -241,10 +241,10 @@ func (t *ParserTestSuite) TestLetStatements() {
 
 func (t *ParserTestSuite) TestReturnStatement() {
 	input := `
-		return 5;
-		return 10;
-		return 993322;
-	`
+    return 5;
+    return 10;
+    return 993322;
+  `
 
 	parser := NewParser(lexer.NewLexer(input))
 	program := parser.ParseProgram()
